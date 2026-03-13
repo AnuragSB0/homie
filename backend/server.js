@@ -9,6 +9,8 @@ const mqttClient = require('./mqttClient');
 
 // 2. Initialize the Express App
 const app = express();
+const cors = require('cors');
+app.use(cors()); // This tells Render: "Allow requests from anywhere, including Netlify!"
 
 // 3. Middleware
 app.use(cors()); // Allows frontend to connect
