@@ -1,6 +1,6 @@
 // backend/middleware/mpinMiddleware.js
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
+const User = require('../models/user');
 
 module.exports = async function (req, res, next) {
     // 1. Grab the raw MPIN from the custom request headers
