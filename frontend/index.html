@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4f46e5">
+
+    <link rel="apple-touch-icon" id="apple-touch-icon-link">
+    <link rel="icon" id="favicon-link">
+    <link rel="manifest" id="manifest-link-v2">
+
+    <title>Homie - Smart Home Control</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class', 
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        const savedTheme = localStorage.getItem('theme');
+        const savedAccent = localStorage.getItem('accentColor') || 'theme-indigo';
+        if (savedTheme === 'light') { 
+            document.documentElement.classList.add('light'); 
+            document.documentElement.classList.remove('dark'); 
+        } else { 
+            document.documentElement.classList.add('dark'); 
+            document.documentElement.classList.remove('light'); 
+        }
+        document.documentElement.classList.add(savedAccent);
+    </script>
+
+    <style>
+        /* ============================================================
+           HOMIE PRODUCTION UI SYSTEM
+        ============================================================ */
+
+        :root {
+            --accent-hsl: 243 90% 60%;
+            --accent-500: #6366f1;
+            --accent-600: #4f46e5;
+            --accent-700: #4338ca;
+            --bg-color-base: #fff;
+            --bg-color-orb1: #fbcfe8;
+            --bg-color-orb2: #a5b4fc;
+            --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .theme-teal { --accent-hsl: 172 80% 40%; --accent-500: #14b8a6; --accent-600: #0d9488; --accent-700: #0f766e; }
+        .theme-rose { --accent-hsl: 347 89% 60%; --accent-500: #f43f5e; --accent-600: #e11d48; --accent-700: #be123c; }
+        .theme-amber { --accent-hsl: 38 96% 50%; --accent-500: #f59e0b; --accent-600: #d97706; --accent-700: #b45309; }
+        .theme-green { --accent-hsl: 142 64% 47%; --accent-500: #22c55e; --accent-600: #16a34a; --accent-700: #15803d; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            letter-spacing: -0.01em;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            height: 100vh; height: -webkit-fill-available; overflow: hidden; padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        h1 { font-size: clamp(1.8rem, 2.5vw, 2.4rem); font-weight: 800; tracking: -0.02em; }
+        h2 { font-size: clamp(1.5rem, 2vw, 2rem); font-weight: 700; }
+        h3 { font-size: 1.25rem; font-weight: 600; }
+
+        /* ================= BACKGROUND SYSTEM ================= */
+        #background-gradient {
+            position: fixed; inset: 0; z-index: -10;
+            background-color: var(--bg-color-base);
+            transition: background-color 1s ease; overflow: hidden;
+        }
+        .light #background-gradient { background: #eef2f7; }
+        #background-gradient::before, #background-gradient::after {
+            content: ''; position: absolute; border-radius: 50%;
+            opacity: 0.65; filter: blur(100px);
+            transform: translateZ(0); will-change: transform;
+        }
+        .light #background-gradient::before, .light #background-gradient::after { opacity: 0.35; }
+        #background-gradient::before { 
+            width: 500px; height: 500px; background-color: var(--bg-color-orb1);
+            animation: move-orb-1 25s ease-in-out infinite; 
+        }
+        #background-gradient::after { 
+            width: 600px; height: 600px; background-color: var(--bg-color-orb2);
+            animation: move-orb-2 35s ease-in-out infinite; 
+        }
+        @keyframes move-orb-1 { 0% { transform: translate(10vw, -10vh); } 25% { transform: translate(60vw, 40vh) scale(1.2); } 50% { transform: translate(20vw, 70vh); } 75% { transform: translate(-20vw, 30vh) scale(0.9); } 100% { transform: translate(10vw, -10vh); } }
+        @keyframes move-orb-2 { 0% { transform: translate(80vw, 90vh) scale(1.1); } 25% { transform: translate(30vw, 20vh); } 50% { transform: translate(10vw, 50vh) scale(0.8); } 75% { transform: translate(50vw, 10vh); } 100% { transform: translate(80vw, 90vh) scale(1.1); } }
+
+        /* ================= GLASS SYSTEM ================= */
+        .light .glass-card, .light .mockup-window, .light #status-bar, .light #room-tabs, .light .security-card, .light [id$="-modal-content"] {
+            background: #ffffff !important; border: 1px solid rgba(15,23,42,0.08) !important;
+            box-shadow: 0 4px 12px rgba(15,23,42,0.04), 0 16px 40px rgba(15,23,42,0.06);
+            backdrop-filter: none !important; color: #0f172a !important; 
+        }
+        .dark .glass-card {
+            background: rgba(0,0,0,0.2); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* ================= SKELETON LOADING ================= */
+        .skeleton-card {
+            position: relative; overflow: hidden; background: rgba(15, 23, 42, 0.05) !important; 
+            border-color: transparent !important; box-shadow: none !important; pointer-events: none;
+        }
+        .dark .skeleton-card { background: rgba(255, 255, 255, 0.05) !important; }
+        .skeleton-card::after {
+            content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+            background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0.3) 20%, rgba(255, 255, 255, 0.6) 60%, rgba(255, 255, 255, 0));
+            animation: shimmer 1.5s infinite;
+        }
+        .dark .skeleton-card::after { background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0.05) 20%, rgba(255, 255, 255, 0.1) 60%, rgba(255, 255, 255, 0)); }
+        @keyframes shimmer { 100% { transform: translateX(100%); } }
+        .skeleton-block { background: rgba(15, 23, 42, 0.1); border-radius: 0.5rem; }
+        .dark .skeleton-block { background: rgba(255, 255, 255, 0.1); }
+
+        /* ================= NAVIGATION ================= */
+        #room-tabs { border-radius: 9999px; transition: all 0.3s var(--ease-premium); -ms-overflow-style: none; scrollbar-width: none; }
+        #room-tabs::-webkit-scrollbar { display: none; }
+        .light #room-tabs button { color: #334155; }
+        #room-tabs button { transition: all 0.25s var(--ease-premium); }
+        .tab-active { background-color: var(--accent-600) !important; color: #ffffff !important; box-shadow: 0 8px 24px rgba(99,102,241,0.35); transform: translateY(-1px); }
+
+        /* ================= CARDS & INTERACTIONS ================= */
+        .device-card, .zone-card { border-radius: 1.25rem; transition: all 0.3s var(--ease-premium); }
+        .device-card:hover, .zone-card:hover { transform: translateY(-6px); }
+        button { transition: transform 0.15s var(--ease-premium), box-shadow 0.25s var(--ease-premium), background-color 0.25s var(--ease-premium); }
+        button:hover { transform: translateY(-2px); }
+        button:active, .interactive-press:active { transform: scale(0.96); }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        .card-enter-animation { animation: fadeSlideUp 0.5s var(--ease-premium) forwards; opacity: 0; }
+
+        /* ================= SLIDER POLISH ================= */
+        input[type=range].control-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; border-radius: 999px; outline: none; }
+        .light input[type=range].control-slider { background-image: linear-gradient(to right, var(--accent-600) var(--fill-percent, 0%), #e2e8f0 var(--fill-percent, 0%)); }
+        .dark input[type=range].control-slider { background-image: linear-gradient(to right, var(--accent-600) var(--fill-percent, 0%), rgba(255, 255, 255, 0.2) var(--fill-percent, 0%)); }
+        input[type=range].control-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; transition: transform 0.15s ease; }
+        .light input[type=range].control-slider::-webkit-slider-thumb { background: var(--accent-600); }
+        .dark input[type=range].control-slider::-webkit-slider-thumb { background: white; border: 3px solid var(--accent-600); }
+        input[type=range].control-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+        .light #settings-modal-backdrop, .light #voice-modal-backdrop, .light #schedule-modal-backdrop, .light #login-modal-backdrop { background: rgba(15,23,42,0.45); }
+        html { scroll-behavior: smooth; }
+        .app-view { display: flex; flex-direction: column; height: 100%; width: 100%; position: absolute; top: 0; left: 0; transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; }
+        .app-view.hidden, .hidden { display: none; }
+        .app-header { padding-top: calc(1rem + env(safe-area-inset-top)); padding-left: calc(1rem + env(safe-area-inset-left)); padding-right: calc(1rem + env(safe-area-inset-right)); }
+        .app-content { padding-left: calc(1rem + env(safe-area-inset-left)); padding-right: calc(1rem + env(safe-area-inset-right)); }
+
+        @media (min-width: 768px) {
+            .app-header { padding-top: calc(2rem + env(safe-area-inset-top)); padding-left: calc(2rem + env(safe-area-inset-left)); padding-right: calc(2rem + env(safe-area-inset-right)); }
+            .app-content { padding-left: calc(2rem + env(safe-area-inset-left)); padding-right: calc(2rem + env(safe-area-inset-right)); }
+        }
+        
+        main#dashboard-container, #energy-center-content, #system-hub-content, #admin-dashboard-content, #landing-page-content { flex-grow: 1; overflow-y: auto; padding-bottom: 6rem; }
+        #animation-canvas { position: fixed; top: 0; left: 0; z-index: 10; pointer-events: none; }
+        .icon-container-on { background-color: hsla(var(--accent-hsl), 0.2) !important; box-shadow: 0 0 16px hsla(var(--accent-hsl), 0.4); }
+        .day-picker-selected { background-color: var(--accent-600) !important; color: white !important; border-color: var(--accent-600) !important; }
+
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin 3s linear infinite; }
+        @keyframes pulse-glow { 0%, 100% { filter: drop-shadow(0 0 5px var(--accent-500)); } 50% { filter: drop-shadow(0 0 16px var(--accent-500)); } }
+        .animate-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+        /* SPARKLINE ANIMATION */
+        .sparkline-path { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: drawLine 1.5s ease-out forwards; }
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+
+        /* SCENES */
+        @keyframes twinkle { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+        .star { position: fixed; background: white; border-radius: 50%; animation: twinkle 4s infinite; z-index: -9; top: -50px; }
+        @keyframes float-up-fade { 0% { transform: translateY(0); opacity: 0.7; } 100% { transform: translateY(-100vh); opacity: 0; } }
+        .sun-mote { position: fixed; border-radius: 50%; animation-name: float-up-fade; animation-timing-function: linear; animation-iteration-count: infinite; z-index: -9; }
+        @keyframes pulse-fade { 0%, 100% { opacity: 0.1; transform: scale(0.9); } 50% { opacity: 0.3; transform: scale(1); } }
+        .relax-orb { position: fixed; border-radius: 50%; animation-name: pulse-fade; animation-timing-function: ease-in-out; animation-iteration-count: infinite; z-index: -9; filter: blur(60px); }
+        @keyframes float-down-fade { 0% { transform: translateY(0); opacity: 0.5; } 100% { transform: translateY(100vh); opacity: 0; } }
+        .work-line { position: fixed; animation-name: float-down-fade; animation-timing-function: linear; animation-iteration-count: infinite; z-index: -9; }
+        .bubble { position: fixed; border-radius: 50%; animation-name: float-up-fade; animation-timing-function: linear; animation-iteration-count: infinite; z-index: -9; border: 2px solid; background: transparent; }
+
+        /* PARTY RGB TEXT EFFECT */
+        @keyframes rgb-shift {
+            0% { filter: hue-rotate(0deg) drop-shadow(0 0 8px #ff0040); color: #ff0040; }
+            33% { filter: hue-rotate(120deg) drop-shadow(0 0 8px #00ff00); color: #00ff00; }
+            66% { filter: hue-rotate(240deg) drop-shadow(0 0 8px #0000ff); color: #0000ff; }
+            100% { filter: hue-rotate(360deg) drop-shadow(0 0 8px #ff0040); color: #ff0040; }
+        }
+        .rgb-party-text {
+            animation: rgb-shift 1.5s linear infinite !important;
+        }
+
+        .security-card { background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .dark .security-card { background: linear-gradient(135deg, rgba(6, 78, 59, 0.4) 0%, rgba(2, 44, 34, 0.2) 100%); border: 1px solid rgba(16, 185, 129, 0.1); }
+        .pulse-red { animation: pulse-red-bg 2s infinite; }
+        @keyframes pulse-red-bg { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        
+        .mockup-window { border: 1px solid; border-radius: 0.75rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); transform: perspective(1000px) rotateX(5deg); transform-origin: top; transition: all 0.3s ease; }
+        .light .mockup-window { border-color: rgba(0,0,0,0.1); }
+        .dark .mockup-window { border-color: rgba(255,255,255,0.1); }
+        .mockup-window:hover { transform: perspective(1000px) rotateX(0deg); }
+        .mockup-header { padding: 0.75rem; border-bottom: 1px solid; }
+        .light .mockup-header { border-color: rgba(0,0,0,0.1); }
+        .dark .mockup-header { border-color: rgba(255,255,255,0.1); }
+        .mockup-header-dot { width: 0.75rem; height: 0.75rem; border-radius: 9999px; background-color: rgba(128, 128, 128, 0.3); }
+
+        /* Login Tab Customization */
+        .login-tab-active { background-color: var(--accent-600); color: white; border-color: var(--accent-600); box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4); z-index: 10; }
+        .login-tab-inactive { background-color: transparent; color: inherit; border-color: transparent; opacity: 0.7; }
+        .light .login-tab-inactive:hover { background-color: rgba(0,0,0,0.05); }
+        .dark .login-tab-inactive:hover { background-color: rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body class="bg-transparent text-slate-900 dark:text-white min-h-screen relative">
+
+    <div id="background-gradient" class="fixed inset-0 -z-10"></div>
+    <canvas id="animation-canvas"></canvas>
+
+    <div id="landing-page-view" class="app-view hidden">
+        <header class="app-header w-full max-w-7xl mx-auto flex justify-between items-center flex-shrink-0">
+            <div class="flex items-center gap-3">
+                 <svg class="w-10 h-10 text-accent-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 1.07A9.013 9.013 0 0012 1a9 9 0 00-8.03 5.31l-.02.06a9.34 9.34 0 00-.5 2.63v1a.75.75 0 001.5 0v-1c0-.4.07-.79.2-1.16l.18-1.52A7.5 7.5 0 0112 2.5a7.5 7.5 0 017.47 6.69l-.02.16c.03.1.05.2.05.3v1a.75.75 0 001.5 0v-1a9.29 9.29 0 00-.5-2.63l-.02-.06A9 9 0 0013 1.07zM15 15.25a.75.75 0 00-1.5 0v5.5a.75.75 0 001.5 0v-5.5zM12 12.75a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zM9 15.25a.75.75 0 00-1.5 0v5.5a.75.75 0 001.5 0v-5.5z"></path></svg>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Homie</h1>
+            </div>
+            <button id="landing-login-btn" class="bg-accent-600 hover:bg-accent-700 interactive-press px-5 py-2 text-sm font-semibold flex items-center gap-2 text-white rounded-full transition-colors shadow-lg">
+                <span>Login / Sign Up</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+        </header>
+
+        <main id="landing-page-content" class="app-content w-full max-w-7xl mx-auto">
+            <section class="text-center pt-16 pb-24">
+                <h2 class="text-5xl sm:text-7xl font-bold text-slate-900 dark:text-white tracking-tight">Your Home, <br/> Intelligently Connected.</h2>
+                <p class="mt-6 text-lg text-slate-700 dark:text-gray-300 max-w-2xl mx-auto">Control your lights, track your energy, and automate your life from one beautiful dashboard. Homie makes your smart home simple.</p>
+                <button id="landing-get-started-btn" class="bg-accent-600 hover:bg-accent-700 interactive-press px-8 py-3 text-base font-semibold flex items-center gap-2 text-white rounded-full transition-colors shadow-lg mt-10 mx-auto">
+                    <span>Get Started for Free</span><i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+                <div class="mt-20 max-w-3xl mx-auto">
+                    <div class="mockup-window glass-card">
+                        <div class="mockup-header flex items-center gap-2"><div class="mockup-header-dot"></div><div class="mockup-header-dot"></div><div class="mockup-header-dot"></div></div>
+                        <div class="p-6 text-left">
+                            <ul class="space-y-4">
+                                <li class="flex items-center gap-3"><i data-lucide="layout-grid" class="w-5 h-5 text-accent-500"></i><span class="font-medium">Room, Zone & Device Control</span></li>
+                                <li class="flex items-center gap-3"><i data-lucide="shield-check" class="w-5 h-5 text-accent-500"></i><span class="font-medium">Advanced Security & Hardware Diagnostics</span></li>
+                                <li class="flex items-center gap-3"><i data-lucide="zap" class="w-5 h-5 text-accent-500"></i><span class="font-medium">Advanced Energy Analytics & Anomaly Detection</span></li>
+                                <li class="flex items-center gap-3"><i data-lucide="split" class="w-5 h-5 text-accent-500"></i><span class="font-medium">IFTTT Rule Engine & Automations</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="main-app-view" class="hidden">
+        <div id="main-dashboard-view" class="app-view">
+            <header class="app-header w-full max-w-7xl mx-auto mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 flex-shrink-0">
+                <div class="flex items-center gap-4 self-start">
+                    <div id="main-power-source" class="text-slate-800 dark:text-white drop-shadow-lg"><svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 1.07A9.013 9.013 0 0012 1a9 9 0 00-8.03 5.31l-.02.06a9.34 9.34 0 00-.5 2.63v1a.75.75 0 001.5 0v-1c0-.4.07-.79.2-1.16l.18-1.52A7.5 7.5 0 0112 2.5a7.5 7.5 0 017.47 6.69l-.02.16c.03.1.05.2.05.3v1a.75.75 0 001.5 0v-1a9.29 9.29 0 00-.5-2.63l-.02-.06A9 9 0 0013 1.07zM15 15.25a.75.75 0 00-1.5 0v5.5a.75.75 0 001.5 0v-5.5zM12 12.75a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zM9 15.25a.75.75 0 00-1.5 0v5.5a.75.75 0 001.5 0v-5.5z"></path></svg></div>
+                    <div>
+                        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white drop-shadow-md">Homie</h1>
+                        <p class="mt-1 text-base text-slate-700 dark:text-gray-300 hidden sm:block">Your Home, Intelligently Connected</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-4 w-full justify-center sm:w-auto sm:justify-end">
+                    <button id="system-hub-btn" title="System Hub" onclick="window.toggleSystemHub()" class="interactive-press p-2 rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10"><i data-lucide="shield-alert" class="w-5 h-5 text-accent-600 dark:text-accent-400"></i></button>
+                    <button id="settings-btn" title="Settings" class="interactive-press p-2 rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10"><i data-lucide="settings"></i></button>
+                    <button id="main-power-btn" title="Toggle All Devices" class="interactive-press p-2 rounded-full text-slate-700 dark:text-white"></button>
+                    <button id="voice-cmd-btn" title="Use Voice Command" class="bg-accent-600 hover:bg-accent-700 interactive-press p-2 sm:px-3 py-2 text-sm font-semibold flex items-center gap-2 text-white rounded-full shadow-lg"><i data-lucide="mic" class="w-5 h-5"></i><span class="hidden sm:inline">Voice</span></button>
+                    <button id="theme-toggle-btn" class="interactive-press p-2 rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10"></button>
+                    <div id="clock" class="text-lg font-medium text-slate-800 dark:text-white w-24 text-center hidden md:block"></div>
+                </div>
+            </header>
+
+            <div id="status-bar" class="app-content w-full max-w-7xl mx-auto mb-8 flex justify-center p-4 glass-card rounded-2xl shadow-lg flex-shrink-0">
+                <div id="quick-stats-widget" class="flex items-center gap-4 min-w-[200px] justify-center text-slate-900 dark:text-white"></div>
+            </div>
+            
+            <nav id="room-tabs" class="app-content w-full max-w-7xl mx-auto mb-8 p-2 flex flex-nowrap justify-start sm:justify-center gap-1 sm:gap-2 glass-card rounded-full overflow-x-auto flex-shrink-0"></nav>
+
+            <div id="room-controls" class="app-content w-full max-w-7xl mx-auto mb-8 flex-shrink-0"></div>
+            <main id="dashboard-container" class="app-content w-full max-w-7xl mx-auto bg-transparent"><section id="devices-container" class="bg-transparent"></section></main>
+        </div>
+
+        <div id="energy-center-view" class="app-view hidden overflow-y-auto"></div>
+        <div id="system-hub-view" class="app-view hidden overflow-y-auto"></div>
+    </div>
+
+    <div id="admin-dashboard-view" class="app-view hidden overflow-y-auto z-10 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-3xl"></div>
+    
+    <div id="settings-modal-backdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50 transition-opacity duration-300 opacity-0">
+        <div id="settings-modal-content" class="text-slate-900 dark:text-white bg-white/80 dark:bg-black/20 backdrop-blur-xl border border-slate-300 dark:border-white/20 p-8 rounded-2xl shadow-xl w-full sm:max-w-md transform transition-all duration-300 scale-95 opacity-0"></div>
+    </div>
+    <div id="voice-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center p-4 z-50 transition-opacity duration-300 opacity-0">
+        <div id="voice-modal-content" class="text-slate-900 dark:text-white bg-white/80 dark:bg-black/20 backdrop-blur-xl border border-slate-300 dark:border-white/20 p-8 rounded-2xl shadow-xl w-full sm:max-w-lg text-center relative"></div>
+    </div>
+    
+    <div id="login-modal-backdrop" class="fixed inset-0 bg-black/60 hidden justify-end z-50 transition-opacity duration-500 opacity-0">
+        <div id="login-modal-content" class="bg-gray-100/80 dark:bg-gray-900/70 backdrop-blur-2xl h-full w-full sm:max-w-md shadow-2xl transform transition-all duration-500 ease-in-out translate-x-full flex flex-col p-0 overflow-y-auto relative">
+            <button onclick="window.hideLoginModal()" class="absolute top-6 left-6 interactive-press text-white bg-black/30 hover:bg-black/50 transition-colors rounded-full p-1.5 z-20"><i data-lucide="x" class="w-5 h-5 pointer-events-none"></i></button>
+            <div id="login-form-container" class="relative z-10 flex-grow flex flex-col pt-24 px-8 pb-8 text-gray-800 dark:text-gray-100">
+                </div>
+        </div>
+    </div>
+
+    <div id="schedule-modal-backdrop" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50 transition-opacity duration-300 opacity-0">
+        <div id="schedule-modal-content" class="text-slate-900 dark:text-white bg-white/80 dark:bg-black/20 backdrop-blur-xl border border-slate-300 dark:border-white/20 p-8 rounded-2xl shadow-xl w-full sm:max-w-lg transform transition-all duration-300 scale-95 opacity-0 max-h-[90vh] overflow-y-auto"></div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const API_BASE_URL = 'https://homie-api.onrender.com/api';
+
+        // --- HARDWARE COMMUNICATION ---
+        // All hardware commands now go through the Node.js backend,
+        // which then broadcasts to MQTT / the NodeMCU.
+        const sendCommandToHardware = async (deviceId, state) => {
+            try {
+                // Map UI state strings to boolean expected by backend
+                const desiredState = (state === 'ON' || state === 'OPEN');
+                
+                const headers = { 'Content-Type': 'application/json' };
+                const token = localStorage.getItem('token');
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                const response = await fetch(`${API_BASE_URL}/hardware/${encodeURIComponent(deviceId)}/toggle`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ state: desiredState })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Hardware toggle failed (${response.status})`);
+                }
+                
+                AuditLog.log(`Backend toggle sent for ${deviceId} -> ${state}`, 'info', { source: 'Hardware Bridge' });
+            } catch (error) {
+                console.error("Hardware communication failed:", error);
+                AuditLog.log(`Failed to toggle ${deviceId} via backend`, 'warn', { source: 'Hardware Bridge' });
+            }
+        };
+
+        // --- DATA WITH HARDWARE HEALTH METRICS ---
+        let devices = [
+            { id: 'lr-light-1', name: 'Main Light', room: 'Living Room', type: 'light', state: 'OFF', category: 'primary', power: 30, dailyUse: 5, isFavorite: false, actuations: 1420, rssi: -45, battery: null, firmwareUpdate: false },
+            { id: 'lr-fan-1', name: 'Ceiling Fan', room: 'Living Room', type: 'fan', state: 'OFF', speed: 2, category: 'primary', power: 70, dailyUse: 10, isFavorite: false, actuations: 4300, rssi: -52, battery: null, firmwareUpdate: true },
+            { id: 'lr-ac', name: 'Air Conditioner', room: 'Living Room', type: 'ac', state: 'OFF', category: 'primary', power: 1250, dailyUse: 6, isFavorite: false, actuations: 850, rssi: -65, battery: null, firmwareUpdate: false },
+            { id: 'lr-door-sensor', name: 'Front Door', room: 'Living Room', type: 'sensor', state: 'CLOSED', category: 'secondary', power: 0, dailyUse: 0, isFavorite: false, actuations: 120, rssi: -72, battery: 85, firmwareUpdate: false },
+            { id: 'lr-tv', name: 'Television', room: 'Living Room', type: 'tv', state: 'OFF', category: 'primary', power: 100, dailyUse: 5, isFavorite: false, actuations: 2100, rssi: -35, battery: null, firmwareUpdate: false },
+            { id: 'lr-light-2', name: 'Dim Light 1', room: 'Living Room', type: 'lamp', state: 'OFF', brightness: 0, category: 'secondary', power: 10, dailyUse: 4, isFavorite: false, actuations: 890, rssi: -48, battery: null, firmwareUpdate: false },
+            { id: 'lr-speaker', name: 'Speaker Set', room: 'Living Room', type: 'speaker', state: 'OFF', category: 'secondary', power: 40, dailyUse: 2, isFavorite: false, actuations: 1200, rssi: -55, battery: null, firmwareUpdate: false },
+            { id: 'br-light-1', name: 'Light', room: 'Bedroom', type: 'light', state: 'OFF', category: 'primary', power: 30, dailyUse: 5, isFavorite: false, actuations: 2300, rssi: -61, battery: null, firmwareUpdate: false },
+            { id: 'br-fan-1', name: 'Fan', room: 'Bedroom', type: 'fan', state: 'OFF', speed: 2, category: 'primary', power: 70, dailyUse: 10, isFavorite: false, actuations: 5600, rssi: -58, battery: null, firmwareUpdate: false },
+            { id: 'br-ac-1', name: 'AC', room: 'Bedroom', type: 'ac', state: 'OFF', category: 'primary', power: 1250, dailyUse: 8, isFavorite: false, actuations: 920, rssi: -70, battery: null, firmwareUpdate: false },
+            { id: 'br-tv-1', name: 'TV', room: 'Bedroom', type: 'tv', state: 'OFF', category: 'primary', power: 100, dailyUse: 4, isFavorite: false, actuations: 1500, rssi: -42, battery: null, firmwareUpdate: false },
+            { id: 'br-lamp-1', name: 'Bedside Lamp', room: 'Bedroom', type: 'lamp', state: 'OFF', brightness: 0, category: 'secondary', power: 15, dailyUse: 4, isFavorite: false, actuations: 3100, rssi: -80, battery: 15, firmwareUpdate: false },
+            { id: 'br-led-1', name: 'LED Strip', room: 'Bedroom', type: 'led-strip', state: 'OFF', mode: 'white', category: 'secondary', power: 10, dailyUse: 5, isFavorite: false, actuations: 450, rssi: -50, battery: null, firmwareUpdate: true },
+            { id: 'k-light-1', name: 'Main Light', room: 'Kitchen', type: 'light', state: 'OFF', category: 'primary', power: 30, dailyUse: 4, isFavorite: false, actuations: 3400, rssi: -62, battery: null, firmwareUpdate: false },
+            { id: 'k-exhaust', name: 'Exhaust Fan', room: 'Kitchen', type: 'exhaust-fan', state: 'OFF', category: 'primary', power: 50, dailyUse: 1, isFavorite: false, actuations: 1100, rssi: -55, battery: null, firmwareUpdate: false },
+            { id: 'k-oven', name: 'Oven', room: 'Kitchen', type: 'oven', state: 'OFF', category: 'primary', power: 1000, dailyUse: 0.5, isFavorite: false, actuations: 320, rssi: -40, battery: null, firmwareUpdate: false },
+            { id: 'k-fridge', name: 'Fridge', room: 'Kitchen', type: 'fridge', state: 'ON', category: 'primary', excludeFromGlobalToggle: true, power: 200, dailyUse: 9, isFavorite: false, actuations: 5, rssi: -45, battery: null, firmwareUpdate: false },
+            { id: 'k-chimney', name: 'Chimney', room: 'Kitchen', type: 'chimney', state: 'OFF', category: 'secondary', power: 175, dailyUse: 1, isFavorite: false, actuations: 780, rssi: -60, battery: null, firmwareUpdate: false },
+            { id: 'bth-light-1', name: 'Main Light', room: 'Bathroom', type: 'light', state: 'OFF', category: 'primary', power: 15, dailyUse: 2, isFavorite: false, actuations: 5200, rssi: -75, battery: null, firmwareUpdate: false },
+            { id: 'bth-exhaust', name: 'Exhaust Fan', room: 'Bathroom', type: 'exhaust-fan', state: 'OFF', category: 'primary', power: 50, dailyUse: 1, isFavorite: false, actuations: 5100, rssi: -72, battery: null, firmwareUpdate: false },
+            { id: 'bth-wm', name: 'Washing Machine', room: 'Bathroom', type: 'washing-machine', state: 'OFF', category: 'primary', power: 750, dailyUse: 0.5, isFavorite: false, actuations: 410, rssi: -68, battery: null, firmwareUpdate: true },
+        ];
+        
+        let customZones = [
+            { id: 'zone-1', name: 'Downstairs Lights', icon: 'lightbulb', devices: ['lr-light-1', 'lr-light-2', 'lr-light-3', 'k-light-1'] },
+            { id: 'zone-2', name: 'All ACs', icon: 'wind', devices: ['lr-ac', 'br-ac-1'] },
+            { id: 'zone-3', name: 'Entertainment', icon: 'tv', devices: ['lr-tv', 'lr-speaker', 'br-tv-1'] },
+            { id: 'zone-4', name: 'Climate Control', icon: 'thermometer', devices: ['lr-ac', 'br-ac-1', 'lr-fan-1', 'br-fan-1', 'k-exhaust', 'bth-exhaust'] }
+        ];
+
+        const scenes = [ 
+            { 
+                name: 'Movie Time', 
+                icon: '🎬', 
+                description: 'Dim lights & turn on the TV for a film.', 
+                actions: [ 
+                    { deviceId: 'lr-tv', state: 'ON'}, 
+                    { deviceId: 'lr-speaker', state: 'ON'}, 
+                    { deviceId: 'lr-light-1', state: 'OFF'}, 
+                    { deviceId: 'lr-light-2', state: 'ON'} 
+                ] 
+            }, 
+            { 
+                name: 'Good Morning', 
+                icon: '☀️', 
+                description: 'Start the day bright and early.', 
+                actions: [ 
+                    { deviceId: 'br-light-1', state: 'ON'}, 
+                    { deviceId: 'br-lamp-1', state: 'ON'} 
+                ] 
+            }, 
+            { 
+                name: 'Work Focus', 
+                icon: '💻', 
+                description: 'Minimize distractions for productivity.', 
+                actions: [ 
+                    { deviceId: 'lr-light-1', state: 'ON'}, 
+                    { deviceId: 'lr-tv', state: 'OFF'}, 
+                    { deviceId: 'lr-speaker', state: 'OFF'} 
+                ] 
+            }, 
+            { 
+                name: 'Relax & Unwind', 
+                icon: '🧘', 
+                description: 'Dim the lights and chill out.', 
+                actions: [ 
+                    { deviceId: 'lr-light-1', state: 'OFF'}, 
+                    { deviceId: 'lr-light-2', state: 'ON'}, 
+                    { deviceId: 'lr-speaker', state: 'ON'} 
+                ] 
+            }, 
+            { 
+                name: 'Cooking Time', 
+                icon: '🍳', 
+                description: 'Get the kitchen ready for a meal.', 
+                actions: [ 
+                    { deviceId: 'k-light-1', state: 'ON'}, 
+                    { deviceId: 'k-exhaust', state: 'ON'}, 
+                    { deviceId: 'k-chimney', state: 'ON'} 
+                ] 
+            }, 
+            { 
+                name: 'Away', 
+                icon: '🏠', 
+                description: 'Turn off all non-essential devices.', 
+                actions: [ 
+                    { deviceId: 'lr-light-1', state: 'OFF'}, 
+                    { deviceId: 'lr-fan-1', state: 'OFF'}, 
+                    { deviceId: 'lr-ac', state: 'OFF'}, 
+                    { deviceId: 'lr-tv', state: 'OFF'}, 
+                    { deviceId: 'lr-speaker', state: 'OFF'}, 
+                    { deviceId: 'br-light-1', state: 'OFF'}, 
+                    { deviceId: 'br-fan-1', state: 'OFF'}, 
+                    { deviceId: 'br-ac-1', state: 'OFF'}, 
+                    { deviceId: 'br-tv-1', state: 'OFF'} 
+                ] 
+            },
+            { 
+                name: 'Party Mode', 
+                icon: '🎉', 
+                description: 'RGB lights shifting and music pumping.', 
+                actions: [ 
+                    { deviceId: 'lr-speaker', state: 'ON'}, 
+                    { deviceId: 'lr-light-1', state: 'OFF'}, 
+                    { deviceId: 'br-led-1', state: 'ON', mode: 'party'} 
+                ] 
+            },
+            { 
+                name: 'Good Night', 
+                icon: '🌙', 
+                description: 'Secures the house and cools the bedroom for sleep.', 
+                actions: [ 
+                    { deviceId: 'lr-tv', state: 'OFF'}, 
+                    { deviceId: 'lr-speaker', state: 'OFF'}, 
+                    { deviceId: 'lr-light-1', state: 'OFF'}, 
+                    { deviceId: 'k-light-1', state: 'OFF'},
+                    { deviceId: 'lr-door-sensor', state: 'CLOSED'},
+                    { deviceId: 'br-ac-1', state: 'ON'},
+                    { deviceId: 'br-lamp-1', state: 'ON'}
+                ] 
+            },
+            { 
+                name: 'Workout Mode', 
+                icon: '🏋️‍♂️', 
+                description: 'Max airflow and upbeat vibes for training.', 
+                actions: [ 
+                    { deviceId: 'lr-ac', state: 'ON'}, 
+                    { deviceId: 'lr-fan-1', state: 'ON'}, 
+                    { deviceId: 'lr-speaker', state: 'ON'}, 
+                    { deviceId: 'br-led-1', state: 'ON', mode: 'white'} 
+                ] 
+            }
+        ];
+        const accentThemes = [ { name: 'indigo', className: 'theme-indigo', color: '#4f46e5' }, { name: 'teal', className: 'theme-teal', color: '#14b8a6' }, { name: 'rose', className: 'theme-rose', color: '#f43f5e' }, { name: 'amber', className: 'theme-amber', color: '#f59e0b' }, { name: 'green', className: 'theme-green', color: '#22c55e' } ];
+        const roomThemes = { light: { 'Default': { base: '#f1f5f9', orb1: '#d8b4fe', orb2: '#a5f3fc' }, 'Living Room':{ base: '#fff1f2', orb1: '#fca5a5', orb2: '#fdba74' }, 'Bedroom': { base: '#f5f3ff', orb1: '#fbcfe8', orb2: '#c4b5fd' }, 'Kitchen': { base: '#fefce8', orb1: '#fed7aa', orb2: '#f87171' }, 'Bathroom': { base: '#ecfeff', orb1: '#a5f3fc', orb2: '#93c5fd' }, 'System': { base: '#f8fafc', orb1: '#cbd5e1', orb2: '#94a3b8' }}, dark: { 'Default': { base: '#020617', orb1: '#4c1d95', orb2: '#1e3a8a' }, 'Living Room':{ base: '#0c0a22', orb1: '#7e22ce', orb2: '#be185d' }, 'Bedroom': { base: '#2e1065', orb1: '#86198f', orb2: '#1e1b4b' }, 'Kitchen': { base: '#451a03', orb1: '#7f1d1d', orb2: '#b91c1c' }, 'Bathroom': { base: '#164e63', orb1: '#0e7490', orb2: '#1e40af' }, 'System': { base: '#0f172a', orb1: '#334155', orb2: '#475569' }} };
+
+        /* ==========================================================================
+           SCENE THEME DEFINITIONS (The missing piece)
+           ========================================================================== */
+        const sceneThemes = {
+            light: {
+                'Movie Time': { base: '#1e1b4b', orb1: '#312e81', orb2: '#1e1b4b' },
+                'Good Morning': { base: '#fff7ed', orb1: '#ffedd5', orb2: '#fed7aa' },
+                'Work Focus': { base: '#f8fafc', orb1: '#e2e8f0', orb2: '#cbd5e1' },
+                'Relax & Unwind': { base: '#faf5ff', orb1: '#f3e8ff', orb2: '#e9d5ff' },
+                'Cooking Time': { base: '#fff7ed', orb1: '#ffedd5', orb2: '#fdba74' },
+                'Away': { base: '#f1f5f9', orb1: '#e2e8f0', orb2: '#cbd5e1' },
+                'Party Mode': { base: '#2e1065', orb1: '#c026d3', orb2: '#be123c' },
+                'Good Night': { base: '#0f172a', orb1: '#1e1b4b', orb2: '#020617' },
+                'Workout Mode': { base: '#fff1f2', orb1: '#fca5a5', orb2: '#f97316' }
+            },
+            dark: {
+                'Movie Time': { base: '#020617', orb1: '#1e1b4b', orb2: '#0f172a' },
+                'Good Morning': { base: '#451a03', orb1: '#7c2d12', orb2: '#9a3412' },
+                'Work Focus': { base: '#0f172a', orb1: '#1e293b', orb2: '#334155' },
+                'Relax & Unwind': { base: '#2e1065', orb1: '#4c1d95', orb2: '#5b21b6' },
+                'Cooking Time': { base: '#431407', orb1: '#7c2d12', orb2: '#991b1b' },
+                'Away': { base: '#020617', orb1: '#1e293b', orb2: '#0f172a' },
+                'Party Mode': { base: '#09090b', orb1: '#86198f', orb2: '#9f1239' },
+                'Good Night': { base: '#020617', orb1: '#09090b', orb2: '#1e1b4b' },
+                'Workout Mode': { base: '#111827', orb1: '#ea580c', orb2: '#b91c1c' }
+            }
+        };
+        
+        let systemTelemetry = { mqttStatus: 'CONNECTED', latency: 14, failsafeEngaged: false };
+        let automations = []; 
+        let kwhRate = parseFloat(localStorage.getItem('kwhRate')) || 9.5; 
+        let activeRoom = 'Living Room';
+        let recognition, voiceTimeout, energyChart, adminChart, pingInterval;
+        let forecastChart = null;
+        let activeTimers = {};
+        let isFullPageRender = true;
+        let isSecondaryDevicesVisible = false;
+        let statsInterval;
+        let currentStatIndex = 0;
+        let activityLog = [];
+        let roomEnergy = {};
+        let currentScene = null;
+        let energyLog = [];
+        
+        // --- NEW: STATE TRACKING ---
+        let activeView = 'dashboard'; 
+        let isLoggedIn = false; 
+        let currentUserRole = 'user'; // 'user' or 'admin'
+        let currentLoginTab = 'user'; // Modal state
+
+        const root = document.documentElement;
+        
+        const AuditLog = {
+            levels: { INFO: 'info', WARN: 'warn', CRITICAL: 'critical', SECURITY: 'security' },
+            log: function(event, level = 'info', metadata = {}) {
+                const now = new Date(); const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                const user = localStorage.getItem('userEmail') || (currentUserRole === 'admin' ? 'Admin' : 'Anurag Bhole'); 
+                const logEntry = { id: `log-${Date.now()}`, timestamp: now.toISOString(), time: time, event: event, level: level, user: user, ...metadata };
+                activityLog.unshift(logEntry);
+                if (activityLog.length > 200) activityLog.pop(); // Keep logs manageable
+                if (level === 'critical' || level === 'security') { console.error(`SECURITY ALERT: ${event}`); this.notifySecurityBreach(); }
+                localStorage.setItem('auditLog', JSON.stringify(activityLog));
+            },
+            notifySecurityBreach: function() {
+                if(currentUserRole === 'admin') return; // Don't flash the screen for admins
+                const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                const defaultTheme = roomThemes[currentTheme]['Default'];
+                root.style.setProperty('--bg-color-base', '#7f1d1d');
+                setTimeout(() => { updateBackgroundColors(defaultTheme); }, 1500);
+            }
+        };
+
+        window.exportLogs = () => {
+            AuditLog.log('Audit Logs Exported to CSV', 'security', { source: 'Web Dashboard' });
+            const csvContent = "data:text/csv;charset=utf-8,Timestamp,Time,Level,Event,User,Source\n" + activityLog.map(e => `${e.timestamp},${e.time},${e.level},${e.event},${e.user},${e.source || 'N/A'}`).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", `homie_audit_${Date.now()}.csv`);
+            document.body.appendChild(link); link.click();
+        };
+
+        window.exportEnergyData = () => {
+            AuditLog.log('Energy History Exported to CSV', 'info');
+            const csvContent = "data:text/csv;charset=utf-8,Time,Power(Watts)\n" + energyLog.map(e => `${new Date(e.time).toLocaleString()},${e.power}`).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", `homie_energy_${Date.now()}.csv`);
+            document.body.appendChild(link); link.click();
+        };
+
+        const landingPageView = document.getElementById('landing-page-view');
+        const mainAppView = document.getElementById('main-app-view');
+        let quickStatsWidget, themeToggleButton, clockElement, roomTabsContainer, roomControlsContainer, devicesContainer, dashboardContainer, animationCanvas, settingsModalBackdrop, voiceModalBackdrop, voiceModalContent, loginModalBackdrop, loginModalContent, scheduleModalBackdrop, scheduleModalContent, mainDashboardView, energyCenterView, systemHubView, adminDashboardView;
+
+        const saveState = () => { localStorage.setItem('devicesState', JSON.stringify(devices)); localStorage.setItem('automationsState', JSON.stringify(automations)); localStorage.setItem('energyLog', JSON.stringify(energyLog)); };
+        
+        const loadState = () => {
+            const savedDevicesData = JSON.parse(localStorage.getItem('devicesState'));
+            const savedAutomations = JSON.parse(localStorage.getItem('automationsState'));
+            const savedEnergyLog = JSON.parse(localStorage.getItem('energyLog'));
+            const savedAuditLog = JSON.parse(localStorage.getItem('auditLog'));
+
+            if (savedDevicesData) { devices = devices.map(defaultDevice => { const savedDevice = savedDevicesData.find(d => d.id === defaultDevice.id); if (savedDevice) return { ...defaultDevice, ...savedDevice }; return defaultDevice; }); }
+            if (savedAutomations) automations = savedAutomations; 
+            if (savedEnergyLog) energyLog = savedEnergyLog; 
+            if (savedAuditLog) activityLog = savedAuditLog;
+            activeRoom = (devices.filter(d => d.isFavorite).length > 0) ? 'Favorites' : 'Living Room';
+        };
+
+        const fetchSchedules = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/schedules`, { method: 'GET' });
+                if (!response.ok) throw new Error(`Failed to fetch schedules (${response.status})`);
+                const data = await response.json();
+                const schedules = Array.isArray(data) ? data : (Array.isArray(data?.schedules) ? data.schedules : []);
+                automations = schedules;
+                saveState();
+                if (activeView === 'dashboard') renderUI();
+            } catch (error) {
+                console.error('Failed to fetch schedules:', error);
+                if (typeof AuditLog !== 'undefined') AuditLog.log('Failed to fetch schedules from backend.', 'warn', { source: 'API' });
+            }
+        };
+        
+        const performHapticFeedback = () => { if (navigator.vibrate) { navigator.vibrate(10); } };
+        const updateClock = () => { if (clockElement) { const now = new Date(); let hours = now.getHours(); const minutes = String(now.getMinutes()).padStart(2, '0'); const ampm = hours >= 12 ? 'PM' : 'AM'; hours = hours % 12; hours = hours ? hours : 12; clockElement.textContent = `${String(hours).padStart(2, ' ')}:${minutes} ${ampm}`; }};
+        
+        const updateBackgroundColors = (theme) => { 
+            // If admin, enforce a deep, analytic theme overriding the standard ones
+            if (currentUserRole === 'admin') {
+                const isDark = root.classList.contains('dark');
+                root.style.setProperty('--bg-color-base', isDark ? '#020617' : '#f8fafc'); 
+                root.style.setProperty('--bg-color-orb1', isDark ? '#0f172a' : '#e2e8f0'); 
+                root.style.setProperty('--bg-color-orb2', isDark ? '#1e293b' : '#cbd5e1');
+                return;
+            }
+            if (theme) {
+                root.style.setProperty('--bg-color-base', theme.base); 
+                root.style.setProperty('--bg-color-orb1', theme.orb1); 
+                root.style.setProperty('--bg-color-orb2', theme.orb2); 
+            }
+        };
+        
+        const toggleTheme = () => {
+            performHapticFeedback();
+            const isDark = root.classList.contains('dark'); const newTheme = isDark ? 'light' : 'dark';
+            root.classList.remove('dark', 'light'); root.classList.add(newTheme);
+            localStorage.setItem('theme', newTheme); updateThemeIcon();
+            
+            if (currentUserRole === 'admin') {
+                updateBackgroundColors({}); // Admin override catches it
+                if(activeView === 'admin') renderAdminDashboard();
+                return;
+            }
+
+            if (currentScene && activeView === 'dashboard') { const themeForScene = sceneThemes[newTheme][currentScene]; if (themeForScene) updateBackgroundColors(themeForScene); } 
+            else { 
+                let themeKey = 'Default';
+                if (activeView === 'system') themeKey = 'System';
+                else if (activeView === 'dashboard') themeKey = (['Favorites', 'Automations', 'Activity Log', 'Scenes', 'Zones'].includes(activeRoom)) ? 'Default' : activeRoom;
+                const themeForRoom = roomThemes[newTheme][themeKey] || roomThemes[newTheme]['Default']; 
+                updateBackgroundColors(themeForRoom); 
+            }
+            if(activeView === 'energy') renderEnergyCenter(); else if (activeView === 'system') renderSystemHub(); else renderUI();
+        };
+        
+        const updateThemeIcon = () => { if (themeToggleButton) { themeToggleButton.innerHTML = root.classList.contains('dark') ? `<i data-lucide="sun"></i>` : `<i data-lucide="moon"></i>`; lucide.createIcons(); } };
+        const calculateEnergy = () => { const rooms = [...new Set(devices.map(d => d.room))]; const newRoomEnergy = {}; if (rooms.length === 0) { roomEnergy = {}; return; } rooms.forEach(room => { const roomDevices = devices.filter(d => d.room === room); const power = roomDevices.filter(d => d.state === 'ON').reduce((sum, d) => sum + (d.power || 0), 0); const energy = (power * 24 * 30) / 1000; newRoomEnergy[room] = { power, energy }; }); roomEnergy = newRoomEnergy; };
+        const toggleFavorite = (deviceId) => { performHapticFeedback(); const device = devices.find(d => d.id === deviceId); if (!device) return; device.isFavorite = !device.isFavorite; AuditLog.log(`${device.name} ${device.isFavorite ? 'added to' : 'removed from'} favorites.`, 'info'); saveState(); renderUI(); };
+        const setAccentColor = (themeName) => { performHapticFeedback(); const theme = accentThemes.find(t => t.name === themeName); if (!theme) return; root.classList.forEach(c => c.startsWith('theme-') && root.classList.remove(c)); root.classList.add(theme.className); localStorage.setItem('accentColor', theme.className); hideSettingsModal(); if(activeView==='dashboard') renderUI(); };
+        const cycleStats = () => { const statsToDisplay = ['devicesOn', 'totalPower', 'indoorTemp', 'humidity', 'airQuality']; currentStatIndex = (currentStatIndex + 1) % statsToDisplay.length; updateQuickStats(statsToDisplay[currentStatIndex]); };
+        
+        const updateQuickStats = (statType = 'devicesOn') => {
+            if (!quickStatsWidget) return;
+            let icon = 'power'; let value = 'N/A'; let label = '...'; let iconColor = 'text-accent-500';
+            switch(statType) {
+                case 'totalPower': const totalPower = devices.filter(d => d.state === 'ON').reduce((sum, device) => sum + (device.power || 0), 0); icon = 'zap'; value = `${totalPower} W`; label = 'Total Power Draw'; iconColor = 'text-green-500'; break;
+                case 'indoorTemp': icon = 'thermometer'; value = '24°C'; label = 'Indoor Temp'; iconColor = 'text-red-500'; break;
+                case 'humidity': icon = 'droplet'; value = '60%'; label = 'Humidity'; iconColor = 'text-blue-500'; break;
+                case 'airQuality': icon = 'leaf'; value = 'GOOD'; label = 'Air Quality'; iconColor = 'text-teal-500'; break;
+                case 'devicesOn': default: const devicesOn = devices.filter(d => d.state === 'ON').length; icon = 'power'; value = `${devicesOn} Devices`; label = 'Currently Active'; iconColor = 'text-accent-500'; break;
+            }
+            quickStatsWidget.innerHTML = `<div class="flex items-center gap-4 text-slate-900 dark:text-white"><i data-lucide="${icon}" class="w-8 h-8 ${iconColor} opacity-90"></i><div class="text-left"><p class="font-bold text-lg">${value}</p><p class="text-xs opacity-70">${label}</p></div></div>`;
+            lucide.createIcons();
+        };
+
+        const showSettingsModal = () => { 
+            const content = document.getElementById('settings-modal-content'); const currentThemeClassName = localStorage.getItem('accentColor') || 'theme-indigo'; 
+            const colorSwatches = accentThemes.map(theme => { const isActive = theme.className === currentThemeClassName; return `<button onclick="window.setAccentColor('${theme.name}')" class="w-12 h-12 rounded-full interactive-press transition-transform duration-200 ${isActive ? 'scale-110 ring-2 ring-offset-2 ring-offset-white/50 dark:ring-offset-black/20' : 'hover:scale-110'}" style="background-color: ${theme.color}; border-color: ${theme.color};"></button>`; }).join(''); 
+            content.innerHTML = `<div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">Settings</h2><button onclick="window.hideSettingsModal()" class="interactive-press text-3xl opacity-50 hover:opacity-100 transition-opacity">&times;</button></div><div><label class="block text-sm font-medium mb-3">Accent Color</label><div class="flex justify-center gap-4">${colorSwatches}</div></div><div class="mt-8 border-t border-black/10 dark:border-white/10 pt-6"><button onclick="window.handleLogout()" class="w-full bg-red-500/10 dark:bg-red-500/20 hover:bg-red-500/20 dark:hover:bg-red-500/30 text-red-600 dark:text-red-400 font-semibold py-3 px-4 rounded-lg interactive-press transition-colors">Logout</button></div>`; 
+            settingsModalBackdrop.classList.remove('hidden'); setTimeout(() => { settingsModalBackdrop.classList.remove('opacity-0'); content.classList.remove('opacity-0', 'scale-95'); }, 10); 
+        };
+        const hideSettingsModal = () => { const content = document.getElementById('settings-modal-content'); settingsModalBackdrop.classList.add('opacity-0'); content.classList.add('opacity-0', 'scale-95'); setTimeout(() => settingsModalBackdrop.classList.add('hidden'), 300); };
+        
+        // --- NEW: TABBED LOGIN MODAL ---
+        window.switchLoginTab = (tab) => {
+            currentLoginTab = tab;
+            renderLoginModal();
+        };
+
+        const renderLoginModal = () => {
+            const formContainer = document.getElementById('login-form-container');
+            const isUser = currentLoginTab === 'user';
+
+            formContainer.innerHTML = `
+                <h2 class="text-3xl font-bold text-center mb-2">Welcome</h2>
+                <p class="text-gray-500 text-center mb-6">Sign in to manage your smart home.</p>
+                
+                <div class="flex rounded-xl bg-black/5 dark:bg-white/5 p-1 mb-8">
+                    <button type="button" onclick="window.switchLoginTab('user')" class="flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all ${isUser ? 'login-tab-active' : 'login-tab-inactive'}">Resident</button>
+                    <button type="button" onclick="window.switchLoginTab('admin')" class="flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all ${!isUser ? 'login-tab-active' : 'login-tab-inactive'}">Administrator</button>
+                </div>
+
+                <form onsubmit="event.preventDefault(); window.handleLoginSuccess('${currentLoginTab}');" class="flex flex-col flex-grow">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">${isUser ? 'Email Address' : 'Admin ID / Email'}</label>
+                            <input type="${isUser ? 'email' : 'text'}" required class="block w-full px-3 py-2 bg-white/50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Password</label>
+                            <input type="password" required class="block w-full px-3 py-2 bg-white/50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500">
+                        </div>
+                        ${!isUser ? `<div><label class="block text-sm font-medium mb-1">2FA Token</label><input type="text" placeholder="123456" class="block w-full px-3 py-2 bg-white/50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-md font-mono focus:outline-none focus:ring-2 focus:ring-accent-500"></div>` : ''}
+                    </div>
+                    <div class="mt-auto pt-6">
+                        <button type="submit" class="w-full bg-accent-600 hover:bg-accent-700 interactive-press text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                            ${isUser ? 'Sign In as Resident' : 'Access Admin Portal'}
+                        </button>
+                    </div>
+                </form>
+            `;
+            lucide.createIcons();
+        };
+
+        const showLoginModal = () => { performHapticFeedback(); renderLoginModal(); loginModalBackdrop.classList.remove('hidden'); setTimeout(() => { loginModalBackdrop.classList.remove('opacity-0'); loginModalContent.classList.remove('translate-x-full'); }, 10); };
+        const hideLoginModal = () => { loginModalBackdrop.classList.add('opacity-0'); loginModalContent.classList.add('translate-x-full'); setTimeout(() => loginModalBackdrop.classList.add('hidden'), 500); };
+        
+        const showVoiceModal = () => { voiceModalContent.innerHTML = `<button onclick="window.hideVoiceModal()" class="interactive-press absolute top-4 right-4 text-3xl opacity-50 hover:opacity-100 transition-opacity">&times;</button><div id="voice-initial-view"><div class="w-24 h-24 mx-auto mb-4 bg-accent-500/20 rounded-full flex items-center justify-center animate-pulse"><i data-lucide="mic" class="w-12 h-12 text-accent-500"></i></div><h2 id="voice-status" class="text-2xl font-bold mb-2">Listening...</h2><p id="transcript-output" class="text-base opacity-70 min-h-[1.5em]">Say a command...</p></div><div id="voice-result-view" class="hidden"></div>`; voiceModalBackdrop.classList.remove('hidden'); setTimeout(() => { voiceModalBackdrop.classList.remove('opacity-0'); lucide.createIcons(); }, 10); };
+        const hideVoiceModal = () => { if (recognition && recognition.abort) { recognition.abort(); } clearTimeout(voiceTimeout); voiceModalBackdrop.classList.add('opacity-0'); setTimeout(() => voiceModalBackdrop.classList.add('hidden'), 300); };
+        
+        const handleVoiceCommand = () => { 
+            performHapticFeedback(); const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; 
+            if (!SpeechRecognition) { alert("Sorry, your browser doesn't support speech recognition."); return; } 
+            recognition = new SpeechRecognition(); recognition.continuous = false; recognition.lang = 'en-US'; 
+            showVoiceModal(); recognition.start(); document.getElementById('voice-status').textContent = "Listening..."; 
+            voiceTimeout = setTimeout(() => { recognition.stop(); document.getElementById('voice-status').textContent = "Timed out."; setTimeout(hideVoiceModal, 2000); }, 15000); 
+            recognition.onresult = (event) => { clearTimeout(voiceTimeout); const transcript = event.results[0][0].transcript.trim(); document.getElementById('transcript-output').textContent = `You said: "${transcript}"`; processAndExecuteCommand(transcript); }; 
+        };
+        
+        const processAndExecuteCommand = (transcript) => { 
+            const plan = { actions: [], feedback: "Sorry, I couldn't understand that." }; 
+            const lowerTranscript = ` ${transcript.toLowerCase()} `; let action = null; 
+            if (/\b(turn on|activate|start|switch on)\b/.test(lowerTranscript)) action = 'ON'; else if (/\b(turn off|deactivate|stop|switch off|shut down)\b/.test(lowerTranscript)) action = 'OFF'; 
+            if (!action) { displayCommandResult(plan); return; } 
+            
+            const rooms = [...new Set(devices.map(d => d.room))]; let targetRooms = rooms.filter(r => lowerTranscript.includes(` ${r.toLowerCase()} `)); let matchedDevices = new Set(); 
+            devices.forEach(device => { if (lowerTranscript.includes(` ${device.name.toLowerCase()} `)) { matchedDevices.add(device); } }); 
+            if (/\b(everything|all devices)\b/.test(lowerTranscript)) { if (targetRooms.length === 0) targetRooms = rooms; matchedDevices = new Set(devices); } 
+            let finalDevices; if (targetRooms.length > 0) { finalDevices = [...matchedDevices].filter(d => targetRooms.includes(d.room)); } else { finalDevices = [...matchedDevices]; if(finalDevices.length > 0) targetRooms = [...new Set(finalDevices.map(d => d.room))]; } 
+            if (finalDevices.length === 0 && targetRooms.length > 0 && matchedDevices.size === 0) { finalDevices = devices.filter(d => targetRooms.includes(d.room)); } 
+            
+            if (finalDevices.length > 0) { 
+                finalDevices.forEach(device => plan.actions.push({ deviceId: device.id, state: action })); 
+                plan.feedback = `Okay, turning ${action.toLowerCase()} ${finalDevices.length} device(s).`; 
+                plan.actions.forEach(act => { setDeviceState(act.deviceId, act.state, 'Voice Command'); }); 
+            } else { plan.feedback = "I couldn't find a matching device."; } 
+            displayCommandResult(plan); 
+        };
+        const displayCommandResult = (plan) => { document.getElementById('voice-initial-view').classList.add('hidden'); const resultView = document.getElementById('voice-result-view'); let deviceListHTML = ''; if (plan.actions.length > 0) { const affectedDeviceIds = new Set(plan.actions.map(a => a.deviceId)); const affectedDevices = devices.filter(d => affectedDeviceIds.has(d.id)); deviceListHTML = `<div class="mt-4 space-y-2 max-h-48 overflow-y-auto pr-2">${affectedDevices.map(d => `<div class="flex items-center justify-between py-3 px-4 bg-white/20 dark:bg-black/10 rounded-lg"><div class="text-left"><p class="font-semibold">${d.name}</p><p class="text-xs opacity-60">${d.room}</p></div><span class="font-semibold text-green-600 dark:text-green-400">EXECUTED</span></div>`).join('')}</div>`; } setTimeout(hideVoiceModal, 2500); resultView.innerHTML = `<h2 class="text-2xl font-bold mb-2">${plan.feedback}</h2>${deviceListHTML}`; resultView.classList.remove('hidden'); };
+
+        const showScheduleModal = () => { 
+            performHapticFeedback(); 
+            const deviceOptions = devices.map(d => `<option value="${d.id}">${d.name} (${d.room})</option>`).join(''); 
+            const sceneOptions = scenes.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+            const now = new Date(); let defaultHours = now.getHours(); let defaultMinutes = now.getMinutes(); 
+            if (defaultMinutes < 30) { defaultMinutes = 30; } else { defaultMinutes = 0; defaultHours = (defaultHours + 1) % 24; } 
+            const defaultTime = `${String(defaultHours).padStart(2, '0')}:${String(defaultMinutes).padStart(2, '0')}`; 
+            
+            scheduleModalContent.innerHTML = `
+                <h2 class="text-2xl font-bold mb-6 text-center">Create New Automation</h2>
+                <div class="space-y-4">
+                    <div><label class="block text-sm font-medium">Automation Type</label><select id="schedule-type" class="w-full mt-1 p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20"><option value="time">Time Schedule</option><option value="timer">Duration Timer</option><option value="condition">State Condition (IFTTT)</option></select></div>
+                    <div id="target-device-container"><label class="block text-sm font-medium">Target Device</label><select id="schedule-device" class="w-full mt-1 p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20">${deviceOptions}</select></div>
+                    <div id="time-based-fields"><div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-medium">Action</label><select id="schedule-action" class="w-full mt-1 p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20"><option>ON</option><option>OFF</option></select></div><div><label id="schedule-time-label" class="block text-sm font-medium">Time</label><input id="schedule-time" type="time" value="${defaultTime}" class="w-full mt-1 p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20" style="color-scheme: dark;"></div></div><div id="auto-off-container" class="mt-4 hidden"><label for="schedule-off-time" class="block text-sm font-medium">And Turn OFF At (Optional)</label><input id="schedule-off-time" type="time" class="w-full mt-1 p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20" style="color-scheme: dark;"></div><div><label class="block text-sm font-medium mt-4 mb-2">Days</label><div id="schedule-days" class="flex justify-center gap-2">${['S','M','T','W','T','F','S'].map((d, i) => `<button data-day="${i}" class="interactive-press day-picker w-10 h-10 rounded-full font-semibold border-2 border-black/10 dark:border-white/20 bg-black/5 dark:bg-black/20 hover:bg-black/10 dark:hover:bg-white/10">${d}</button>`).join('')}</div></div></div>
+                    <div id="timer-based-fields" class="hidden"><label class="block text-sm font-medium">Turn off after (minutes)</label><input id="schedule-duration" type="number" value="30" class="w-full mt-1 p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20"></div>
+                    <div id="condition-based-fields" class="hidden p-4 border border-accent-500/50 rounded-xl bg-accent-500/5"><h3 class="font-bold text-sm mb-2 opacity-80 uppercase tracking-wide">IF (Trigger)</h3><select id="condition-trigger-device" class="w-full mb-2 p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20">${deviceOptions}</select><select id="condition-trigger-state" class="w-full mb-4 p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20"><option value="ON">Changes to ON / OPEN</option><option value="OFF">Changes to OFF / CLOSED</option></select><h3 class="font-bold text-sm mb-2 opacity-80 uppercase tracking-wide">THEN (Action)</h3><select id="condition-action-type" class="w-full mb-2 p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20"><option value="device">Control Device</option><option value="scene">Activate Scene</option></select><div id="condition-action-device-container"><select id="condition-action-device" class="w-full mb-2 p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20">${deviceOptions}</select><select id="condition-action-state" class="w-full p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20"><option value="ON">Turn ON / OPEN</option><option value="OFF">Turn OFF / CLOSED</option></select></div><div id="condition-action-scene-container" class="hidden"><select id="condition-action-scene" class="w-full p-2 bg-white/50 dark:bg-black/20 rounded-md border border-black/10 dark:border-white/20">${sceneOptions}</select></div></div>
+                </div>
+                <div class="flex gap-4 mt-8"><button onclick="window.saveSchedule()" class="interactive-press w-full bg-accent-600 text-white font-semibold py-3 px-4 rounded-xl">Save</button><button onclick="window.hideScheduleModal()" class="interactive-press w-full bg-slate-200 dark:bg-white/20 text-slate-800 dark:text-white font-semibold py-3 px-4 rounded-xl">Cancel</button></div>`; 
+            
+            document.getElementById('schedule-type').addEventListener('change', (e) => { const val = e.target.value; document.getElementById('target-device-container').classList.toggle('hidden', val === 'condition'); document.getElementById('time-based-fields').classList.toggle('hidden', val !== 'time'); document.getElementById('timer-based-fields').classList.toggle('hidden', val !== 'timer'); document.getElementById('condition-based-fields').classList.toggle('hidden', val !== 'condition'); }); 
+            document.getElementById('condition-action-type').addEventListener('change', (e) => { const isScene = e.target.value === 'scene'; document.getElementById('condition-action-device-container').classList.toggle('hidden', isScene); document.getElementById('condition-action-scene-container').classList.toggle('hidden', !isScene); });
+            const actionSelect = document.getElementById('schedule-action'); 
+            const updateActionFields = () => { const isActionOn = actionSelect.value === 'ON'; document.getElementById('auto-off-container').classList.toggle('hidden', !isActionOn); document.getElementById('schedule-time-label').textContent = isActionOn ? 'Turn ON At' : 'Turn OFF At'; }; 
+            actionSelect.addEventListener('change', updateActionFields); updateActionFields(); 
+            
+            scheduleModalBackdrop.classList.remove('hidden'); setTimeout(() => { scheduleModalBackdrop.classList.remove('opacity-0'); scheduleModalContent.classList.remove('opacity-0', 'scale-95'); }, 10); 
+        };
+        const hideScheduleModal = () => { scheduleModalBackdrop.classList.add('opacity-0'); scheduleModalContent.classList.add('opacity-0', 'scale-95'); setTimeout(() => scheduleModalBackdrop.classList.add('hidden'), 300); };
+        
+        const saveSchedule = async () => { 
+            const type = document.getElementById('schedule-type').value; 
+            if (type === 'time') { 
+                const deviceId = document.getElementById('schedule-device').value;
+                const action = document.getElementById('schedule-action').value;
+                const time = document.getElementById('schedule-time').value;
+                const days = [...document.querySelectorAll('.day-picker-selected')].map(el => parseInt(el.dataset.day));
+                const offTimeInput = document.getElementById('schedule-off-time');
+                if (!time || days.length === 0) return;
+
+                try {
+                    const payload = { type, deviceId, action, time, days, enabled: true };
+                    const response = await fetch(`${API_BASE_URL}/schedules`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`Failed to save schedule (${response.status})`);
+                    const saved = await response.json();
+                    automations.push(saved);
+
+                    if (action === 'ON' && offTimeInput.value) {
+                        const offPayload = { type, deviceId, action: 'OFF', time: offTimeInput.value, days, enabled: true };
+                        const offResponse = await fetch(`${API_BASE_URL}/schedules`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(offPayload)
+                        });
+                        if (offResponse.ok) {
+                            const offSaved = await offResponse.json();
+                            automations.push(offSaved);
+                        }
+                    }
+
+                    AuditLog.log(`Time Schedule saved to backend for ${deviceId}`, 'info', { source: 'API' });
+                } catch (error) {
+                    console.error('Failed to save schedule:', error);
+                    alert('Failed to save schedule to backend. Check your server and try again.');
+                    return;
+                }
+            } else if (type === 'timer') { 
+                alert("Timer automations are local-only for now (not synced to backend).");
+                const deviceId = document.getElementById('schedule-device').value; const duration = parseInt(document.getElementById('schedule-duration').value, 10); 
+                if (isNaN(duration) || duration <= 0) return; automations.push({ id: Date.now(), type, deviceId, duration, enabled: true }); AuditLog.log(`Auto-off Timer created for ${deviceId}`, 'info'); 
+            } else if (type === 'condition') {
+                alert("Conditional automations are local-only for now (not synced to backend).");
+                const triggerId = document.getElementById('condition-trigger-device').value; const triggerState = document.getElementById('condition-trigger-state').value; const actionType = document.getElementById('condition-action-type').value;
+                let actionObj = { type: actionType };
+                if (actionType === 'device') { actionObj.targetId = document.getElementById('condition-action-device').value; actionObj.state = document.getElementById('condition-action-state').value; } else { actionObj.targetId = document.getElementById('condition-action-scene').value; }
+                automations.push({ id: Date.now(), type: 'condition', condition: { deviceId: triggerId, state: triggerState }, action: actionObj, enabled: true }); AuditLog.log(`Conditional Rule created`, 'info');
+            }
+            saveState(); if(activeView==='dashboard') renderUI(); hideScheduleModal(); 
+        };
+        const deleteSchedule = async (id) => {
+            if (!confirm('Delete this automation?')) return;
+            const idStr = String(id);
+        
+            try {
+                const response = await fetch(`${API_BASE_URL}/schedules/${encodeURIComponent(idStr)}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error(`Failed to delete schedule (${response.status})`);
+        
+                // Remove from in-memory state
+                automations = automations.filter(s => String(s?._id || s?.id) !== idStr);
+
+                // Immediately remove the corresponding card from the DOM
+                const cardEl = document.querySelector(`[data-schedule-id="${idStr}"]`);
+                if (cardEl && cardEl.parentElement) {
+                    cardEl.parentElement.removeChild(cardEl);
+                }
+
+                AuditLog.log('Automation deleted.', 'warn', { source: 'API' });
+                saveState();
+
+                // Re-render current view to keep everything in sync
+                if (activeView === 'dashboard') {
+                    renderUI();
+                } else if (typeof renderSchedules === 'function') {
+                    renderSchedules();
+                }
+            } catch (error) {
+                console.error('Failed to delete schedule:', error);
+                alert('Failed to delete schedule from backend. Check your server and try again.');
+            }
+        };
+        const formatTime12Hour = (timeString) => { if (!timeString) return ''; const [hours, minutes] = timeString.split(':'); const h = parseInt(hours, 10); return `${h % 12 || 12}:${minutes} ${h >= 12 ? 'PM' : 'AM'}`; };
+        
+        const checkTimeAutomations = () => { const now = new Date(); const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; const currentDay = now.getDay(); automations.forEach(automation => { if (automation.type === 'time' && automation.enabled && automation.time === currentTime && automation.days.includes(currentDay)) { const device = devices.find(d => d.id === automation.deviceId); if (device && device.state !== automation.action) { setDeviceState(device.id, automation.action, 'Schedule'); } } }); };
+        const applyTimerIfNeeded = (deviceId, oldState, newState) => { if ((oldState === 'OFF' || oldState === 'CLOSED') && (newState === 'ON' || newState === 'OPEN')) { const timerSchedule = automations.find(s => s.type === 'timer' && s.deviceId === deviceId && s.enabled); if (timerSchedule) { if (activeTimers[deviceId]) clearTimeout(activeTimers[deviceId]); activeTimers[deviceId] = setTimeout(() => { setDeviceState(deviceId, devices.find(d => d.id === deviceId)?.type === 'sensor' ? 'CLOSED' : 'OFF', 'Timer'); delete activeTimers[deviceId]; }, timerSchedule.duration * 60 * 1000); } } };
+        
+        const evaluateConditionalAutomations = (triggerDeviceId, newState) => {
+            automations.filter(s => s.type === 'condition' && s.enabled).forEach(rule => {
+                if (rule.condition.deviceId === triggerDeviceId && rule.condition.state === newState) {
+                    AuditLog.log(`Rule executed: IF ${triggerDeviceId} is ${newState}`, 'info', { source: 'Rule Engine' });
+                    if (rule.action.type === 'device') setDeviceState(rule.action.targetId, rule.action.state, 'Rule Engine');
+                    else if (rule.action.type === 'scene') activateScene(rule.action.targetId);
+                }
+            });
+        };
+
+        const resetSceneTheme = () => {
+            if (!currentScene) return; 
+            AuditLog.log(`Scene "${currentScene}" deactivated.`, 'info');
+            currentScene = null; removeSceneAnimations();
+            const currentTheme = root.classList.contains('dark') ? 'dark' : 'light';
+            const roomName = (['Favorites', 'Automations', 'Activity Log', 'Scenes', 'Zones'].includes(activeRoom)) ? 'Default' : activeRoom;
+            updateBackgroundColors(roomThemes[currentTheme][roomName] || roomThemes[currentTheme]['Default']);
+        };
+
+        window.toggleFailsafe = () => {
+            performHapticFeedback(); systemTelemetry.failsafeEngaged = !systemTelemetry.failsafeEngaged;
+            if (systemTelemetry.failsafeEngaged) {
+                AuditLog.log('EMERGENCY STOP ENGAGED', 'critical', { source: 'Hardware Diagnostics' });
+                devices.forEach(device => { if (!device.excludeFromGlobalToggle && (device.state === 'ON' || device.state === 'OPEN')) { setDeviceState(device.id, device.type === 'sensor' ? 'CLOSED' : 'OFF', 'E-STOP'); } });
+            } else { AuditLog.log('Emergency Stop Disengaged', 'warn', { source: 'Hardware Diagnostics' }); }
+            if(activeView === 'system') renderSystemHub();
+        };
+        
+        const setDeviceState = (deviceId, state, source = 'Manual') => { 
+            if (source.startsWith('Manual') || source === 'Main Switch') resetSceneTheme();
+            const device = devices.find(d => d.id === deviceId);
+            if (systemTelemetry.failsafeEngaged && (state === 'ON' || state === 'OPEN') && !device.excludeFromGlobalToggle && source !== 'E-STOP') { AuditLog.log(`Blocked attempt to trigger ${device.name} while Failsafe engaged`, 'warn'); return; }
+            if (!device || device.state === state) return; 
+            const oldState = device.state; device.state = state; 
+            AuditLog.log(`${device.room} ${device.name} turned ${device.state.toLowerCase()}`, 'info', { source: source }); 
+            
+            if (state === 'ON' || state === 'OPEN') { 
+                if (device.type === 'fan' && device.speed === 0) device.speed = 2; else if (device.type === 'lamp' && device.brightness === 0) device.brightness = 50; 
+                device.actuations = (device.actuations || 0) + 1; 
+                device.turnedOnAt = Date.now(); 
+            } else { device.turnedOnAt = null; }
+            
+            calculateEnergy(); 
+            if (activeView === 'dashboard') renderUI(); else if (activeView === 'system') renderSystemHub();
+            
+            // ---> SEND THE HARDWARE COMMAND <---
+            sendCommandToHardware(deviceId, state);
+
+            applyTimerIfNeeded(deviceId, oldState, state); 
+            evaluateConditionalAutomations(deviceId, state); 
+            saveState(); 
+        };
+
+        const getIcon = (type, deviceState = {}) => { let iconName = 'help-circle'; let colorClass = ''; if (type === 'led-strip' && deviceState.state === 'ON') { switch(deviceState.mode) { case 'warm': iconName = 'sun'; colorClass = 'text-amber-400'; break; case 'party': iconName = 'party-popper'; colorClass = 'rgb-party-text'; break; default: iconName = 'lightbulb'; } } else { switch (type) { case 'sensor': iconName = 'scan-line'; break; case 'light': iconName = 'lightbulb'; break; case 'lamp': iconName = 'lamp'; break; case 'fan': case 'exhaust-fan': iconName = 'fan'; break; case 'ac': iconName = 'wind'; break; case 'tv': iconName = 'tv'; break; case 'speaker': iconName = 'speaker'; break; case 'led-strip': iconName = 'lightbulb'; break; case 'oven': iconName = 'cooking-pot'; break; case 'fridge': iconName = 'server'; break; case 'chimney': iconName = 'chef-hat'; break; case 'washing-machine': iconName = 'washing-machine'; break; } } let iconGlowClass = (deviceState.state === 'ON' || deviceState.state === 'OPEN') ? 'animate-glow' : ''; return `<i data-lucide="${iconName}" class="w-8 h-8 ${colorClass} ${iconGlowClass}"></i>`; };
+        const getContainerAnimationClass = (device, isOn) => { if (!isOn) return ''; if (['fan', 'exhaust-fan'].includes(device.type)) return 'animate-spin-slow'; if (device.type === 'ac') return 'animate-pulse'; return ''; };
+        
+        const generateSparkline = (data, color, label, val) => {
+            const max = Math.max(...data); const min = Math.min(...data);
+            const width = 100; const height = 24;
+            const points = data.map((v, i) => `${(i / (data.length - 1)) * width},${height - ((v - min) / (max - min || 1)) * height}`).join(' L ');
+            return `<div class="mt-4 pt-3 border-t border-black/5 dark:border-white/5"><div class="flex justify-between items-end mb-1"><span class="text-[10px] font-bold opacity-60 uppercase">${label}</span><span class="text-xs font-bold">${val}</span></div><svg viewBox="0 -2 100 28" class="w-full h-8 overflow-visible" preserveAspectRatio="none"><path d="M 0,${height} L ${points}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="sparkline-path drop-shadow-sm opacity-80"/></svg></div>`;
+        };
+
+        const createDeviceCard = (device) => {
+            const card = document.createElement('div'); card.setAttribute('data-device-id', device.id);
+            const isOffline = !!device.isOffline;
+            const isOn = (device.state === 'ON' || device.state === 'OPEN') && !isOffline; 
+            const animationClass = isFullPageRender ? 'card-enter-animation' : '';
+            
+            // Add grayscale and dimming if the device is dead
+            card.className = `device-card text-slate-900 dark:text-white glass-card rounded-3xl p-4 sm:p-6 shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${animationClass} ${isOffline ? 'opacity-70 grayscale border-red-500/20' : ''}`;
+            
+            const iconColor = isOn ? 'text-accent-500' : 'text-slate-800 dark:text-white';
+            const iconContainerOnClass = isOn ? 'icon-container-on' : '';
+            const favStarHTML = `<button onclick="window.toggleFavorite('${device.id}')" class="absolute top-4 right-4 interactive-press text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition-colors z-20"><i data-lucide="star" class="${device.isFavorite ? 'fill-amber-400 text-amber-400' : ''} pointer-events-none"></i></button>`;
+            
+            const offlineBanner = isOffline ? `<div class="absolute top-0 left-0 w-full bg-red-500/90 text-white text-[10px] font-bold py-1 text-center uppercase tracking-widest z-30 flex items-center justify-center gap-1 shadow-md"><i data-lucide="wifi-off" class="w-3 h-3"></i> Node Offline</div>` : '';
+            
+            const rssiColor = device.rssi >= -60 ? 'text-green-500' : (device.rssi >= -75 ? 'text-amber-500' : 'text-red-500');
+            let healthBadges = isOffline 
+                ? `<div class="mt-1.5 opacity-100 text-[10px] font-bold text-red-500 animate-pulse">PING TIMEOUT</div>` 
+                : `<div class="flex items-center gap-3 mt-1.5 opacity-70 text-[10px] font-bold uppercase tracking-wider"><span class="flex items-center gap-1 ${rssiColor}"><i data-lucide="wifi" class="w-3 h-3"></i> ${device.rssi}dBm</span>${device.battery !== null ? `<span class="flex items-center gap-1 ${device.battery>20?'text-green-500':'text-red-500'}"><i data-lucide="battery${device.battery<50?'-medium':''}" class="w-3 h-3"></i> ${device.battery}%</span>` : ''}${device.firmwareUpdate ? `<span class="flex items-center gap-1 text-blue-500"><i data-lucide="download-cloud" class="w-3 h-3 animate-pulse"></i> Update</span>` : ''}</div>`;
+
+            const headerHTML = `${offlineBanner}<div class="flex items-start justify-between mb-4 ${isOffline ? 'mt-4' : ''}"><div class="flex items-start space-x-4 w-full pr-8"><div class="p-3 bg-black/5 dark:bg-black/20 rounded-xl ${iconColor} ${getContainerAnimationClass(device, isOn)} ${iconContainerOnClass} transition-colors duration-300">${getIcon(device.type, {state: device.state, mode: device.mode})}</div><div><h3 class="text-lg md:text-xl font-bold line-clamp-1 leading-tight">${device.name}</h3>${healthBadges}</div></div>${favStarHTML}</div>`;
+            
+            const stateColor = isOffline ? 'text-red-500' : (isOn ? 'text-green-600 dark:text-green-400' : 'text-slate-700 dark:text-white/60');
+            const disabledState = isOffline ? 'opacity-50 pointer-events-none' : '';
+            
+            let mainToggleHTML = '';
+            if (device.type === 'sensor') {
+                mainToggleHTML = `<div class="flex items-center justify-between"><span class="text-lg font-bold ${stateColor}">${isOffline ? 'N/A' : device.state}</span><button data-id="${device.id}" class="toggle-btn interactive-press relative z-10 px-3 py-1 text-xs font-bold rounded-lg border border-black/10 dark:border-white/20 text-slate-800 dark:text-white ${disabledState}">Trigger</button></div>`;
+            } else {
+                mainToggleHTML = `<div class="flex items-center justify-between"><span class="text-lg font-bold ${stateColor}">${isOffline ? 'ERR' : (isOn ? 'ON' : 'OFF')}</span><button data-id="${device.id}" class="toggle-btn interactive-press relative z-10 inline-flex items-center h-8 w-16 rounded-full ${isOn ? 'bg-green-500' : 'bg-slate-300 dark:bg-black/20'} transition-colors duration-300 ${(systemTelemetry.failsafeEngaged && !device.excludeFromGlobalToggle) || isOffline ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}"><span class="inline-block w-6 h-6 transform bg-white rounded-full shadow-md transition-transform duration-300 ${isOn ? 'translate-x-9' : 'translate-x-1'} pointer-events-none"></span></button></div>`;
+            }
+            
+            let advancedControls = '';
+            if (isOn && device.type !== 'sensor') {
+                switch (device.type) {
+                    case 'fan': advancedControls = `<div class="pt-4 space-y-2"><div class="flex justify-between items-center text-sm font-medium"><span>Speed</span><span id="fan-speed-label-${device.id}">${device.speed}</span></div><input type="range" min="1" max="5" step="1" value="${device.speed}" data-id="${device.id}" class="control-slider fan-slider w-full"></div>`; break;
+                    case 'lamp': advancedControls = `<div class="pt-4 space-y-2"><div class="flex justify-between items-center text-sm font-medium"><span>Brightness</span><span id="brightness-label-${device.id}">${device.brightness}%</span></div><input type="range" min="0" max="100" value="${device.brightness}" data-id="${device.id}" class="control-slider lamp-slider w-full"></div>`; break;
+                    case 'led-strip': const modes = ['warm', 'white', 'party']; const modeButtons = modes.map(mode => `<button data-id="${device.id}" data-mode="${mode}" class="led-mode-btn interactive-press text-sm font-semibold rounded-full px-3 py-1 transition-colors ${device.mode === mode ? 'bg-accent-600 text-white' : 'bg-slate-200 dark:bg-black/20 hover:bg-slate-300 dark:hover:bg-black/30 text-slate-800 dark:text-white'}">${mode.charAt(0).toUpperCase() + mode.slice(1)}</button>`).join(''); advancedControls = `<div class="pt-4 flex justify-around items-center">${modeButtons}</div>`; break;
+                }
+                if (device.type === 'ac') advancedControls += generateSparkline([26, 25.5, 25, 24.8, 24.2, 24, 23.5], '#3b82f6', 'Cooling Trend', '23.5°C'); 
+                else if (device.type === 'fridge') advancedControls += generateSparkline([4.2, 3.8, 4.1, 4.0, 3.9, 4.0, 4.0], '#14b8a6', 'Internal Temp', '4.0°C');
+            }
+            
+            const controlsHTML = `<div class="mt-auto pt-4 border-t border-black/5 dark:border-white/5 space-y-2 ${disabledState}">${mainToggleHTML}${advancedControls}</div>`;
+            card.innerHTML = headerHTML + controlsHTML; return card;
+        };
+        
+        const updateMainPowerButtonState = () => { const mainPowerBtn = document.getElementById('main-power-btn'); if (!mainPowerBtn) return; const isAnyDeviceOn = devices.some(d => (d.state === 'ON' || d.state === 'OPEN') && !d.excludeFromGlobalToggle); mainPowerBtn.innerHTML = `<i data-lucide="power" class="pointer-events-none"></i>`; mainPowerBtn.classList.toggle('bg-red-500/80', isAnyDeviceOn); mainPowerBtn.classList.toggle('text-white', isAnyDeviceOn); };
+        const handleMainPowerToggle = () => { performHapticFeedback(); const isAnyDeviceOn = devices.some(d => (d.state === 'ON' || d.state === 'OPEN') && !d.excludeFromGlobalToggle); const targetState = isAnyDeviceOn ? 'OFF' : 'ON'; devices.forEach(device => { if (!device.excludeFromGlobalToggle) { setDeviceState(device.id, device.type === 'sensor' ? (isAnyDeviceOn?'CLOSED':'OPEN') : targetState, 'Main Switch'); } }); };
+
+        const renderUI = () => {
+            updateMainPowerButtonState(); calculateEnergy(); updateQuickStats( ['devicesOn', 'totalPower', 'highestEnergyRoom'][currentStatIndex] );
+            const navItems = ["Favorites", "Zones", ...new Set(devices.map(d => d.room)), "Scenes", "Automations", "Activity Log"]; 
+            const currentTheme = root.classList.contains('dark') ? 'dark' : 'light';
+            
+            roomTabsContainer.innerHTML = ''; 
+            navItems.forEach(item => { 
+                const tab = document.createElement('button'); 
+                tab.innerHTML = item === 'Favorites' ? `<i data-lucide="star" class="w-4 h-4 pointer-events-none"></i><span class="hidden sm:inline ml-2 pointer-events-none">Favorites</span>` : item; 
+                tab.className = `text-slate-800 dark:text-white/80 interactive-press px-4 py-2 text-sm sm:text-base font-bold transition-all duration-300 rounded-full opacity-80 hover:opacity-100 hover:bg-black/10 dark:hover:bg-white/10 flex items-center shrink-0 gap-2 ${item === activeRoom ? 'tab-active !opacity-100' : ''}`; 
+                tab.onclick = () => { 
+                    performHapticFeedback();
+                    if(activeRoom !== item) { 
+                        if (!currentScene) { 
+                            document.getElementById('background-gradient').style.opacity = 1;
+                            const roomName = (['Favorites', 'Automations', 'Activity Log', 'Scenes', 'Zones'].includes(item)) ? 'Default' : item;
+                            updateBackgroundColors(roomThemes[currentTheme][roomName] || roomThemes[currentTheme]['Default']);
+                            removeSceneAnimations(); 
+                        }
+                        activeRoom = item; 
+                        isFullPageRender = true; 
+                        isSecondaryDevicesVisible = false; 
+                        renderUI(); 
+                    } 
+                }; 
+                roomTabsContainer.appendChild(tab); 
+            }); 
+            
+            if (['Scenes', 'Activity Log', 'Automations', 'Favorites', 'Zones'].includes(activeRoom)) { 
+                roomControlsContainer.innerHTML = ''; 
+                if(activeRoom === 'Scenes') renderScenes(); 
+                else if(activeRoom === 'Activity Log') renderActivityLog(); 
+                else if(activeRoom === 'Automations') renderSchedules(); 
+                else if(activeRoom === 'Favorites') renderFavoritesView(); 
+                else if(activeRoom === 'Zones') renderZonesView();
+            } else { renderRoomView(); } 
+            
+            lucide.createIcons();
+            updateAllSliderFills();
+        };
+
+        const renderRoomView = () => { 
+            roomControlsContainer.innerHTML = `<div class="flex flex-col sm:flex-row items-center justify-between gap-4"><h2 class="text-2xl sm:text-3xl font-bold drop-shadow-md text-slate-900 dark:text-white">${activeRoom}</h2><div class="flex items-center gap-2"><button onclick="window.handleRoomToggle('${activeRoom}')" class="text-slate-800 dark:text-white interactive-press px-4 py-2 text-sm font-semibold flex items-center gap-2 bg-white/60 dark:bg-white/10 hover:bg-white/90 dark:hover:bg-white/20 rounded-full transition-colors border border-slate-900/10 dark:border-white/0">Toggle All</button><button onclick="window.toggleEnergyCenter()" class="text-slate-800 dark:text-white interactive-press px-4 py-2 text-sm font-semibold flex items-center gap-2 bg-white/60 dark:bg-white/10 hover:bg-white/90 dark:hover:bg-white/20 rounded-full transition-colors border border-slate-900/10 dark:border-white/0">Energy Usage</button></div></div>`; 
+            devicesContainer.innerHTML = ''; 
+            
+            const primaryDevices = devices.filter(d => d.room === activeRoom && d.category === 'primary'); 
+            const secondaryDevices = devices.filter(d => d.room === activeRoom && d.category === 'secondary'); 
+            let devicesGrid = (deviceList, delayStart = 0) => { let grid = document.createElement('div'); grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6'; deviceList.forEach((device, index) => { const card = createDeviceCard(device); if(isFullPageRender) card.style.animationDelay = `${(delayStart + index) * 50}ms`; grid.appendChild(card); }); return grid; }; 
+            
+            devicesContainer.appendChild(devicesGrid(primaryDevices)); 
+            if (secondaryDevices.length > 0) { 
+                const subtitleButton = document.createElement('button'); subtitleButton.className = 'text-slate-800 dark:text-white/80 w-full text-left text-xl font-bold mt-10 mb-6 border-b border-black/10 dark:border-white/20 pb-2 flex justify-between items-center interactive-press'; subtitleButton.innerHTML = `<span>Secondary Devices</span><i data-lucide="${isSecondaryDevicesVisible ? 'chevron-up' : 'chevron-down'}"></i>`; subtitleButton.onclick = () => { isSecondaryDevicesVisible = !isSecondaryDevicesVisible; renderUI(); }; devicesContainer.appendChild(subtitleButton); 
+                const secondaryGrid = devicesGrid(secondaryDevices, primaryDevices.length); 
+                if(!isSecondaryDevicesVisible) { secondaryGrid.classList.add('hidden'); } 
+                devicesContainer.appendChild(secondaryGrid); 
+            } 
+            isFullPageRender = false; 
+        };
+
+        const renderFavoritesView = () => { 
+            roomControlsContainer.innerHTML = `<div class="flex items-center justify-between"><h2 class="text-3xl font-bold text-slate-900 dark:text-white drop-shadow-md">Favorites</h2></div>`; 
+            devicesContainer.innerHTML = ''; 
+            const favoriteDevices = devices.filter(d => d.isFavorite); 
+            if (favoriteDevices.length === 0) { 
+                devicesContainer.innerHTML = `<div class="text-center mt-16 glass-card rounded-xl p-8 text-slate-800 dark:text-white"><div class="inline-block p-4 bg-black/5 dark:bg-white/10 rounded-full"><i data-lucide="star-off" class="w-16 h-16 text-slate-600 dark:text-white/70"></i></div><h3 class="mt-4 text-xl font-semibold">No Favorites Yet</h3><p class="opacity-70 mt-1">Click the star icon on a device to add it here.</p></div>`; 
+                return; 
+            } 
+            let grid = document.createElement('div'); grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6'; 
+            favoriteDevices.forEach((device, index) => { const card = createDeviceCard(device); if(isFullPageRender) card.style.animationDelay = `${index * 50}ms`; grid.appendChild(card); }); 
+            devicesContainer.appendChild(grid); 
+            isFullPageRender = false; 
+        };
+
+        const renderScenes = () => { 
+            roomControlsContainer.innerHTML = `<div class="flex items-center justify-between"><h2 class="text-3xl font-bold text-slate-900 dark:text-white drop-shadow-md">Scenes</h2></div>`; 
+            devicesContainer.innerHTML = '';
+            const scenesGrid = document.createElement('div'); scenesGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'; 
+            scenes.forEach(scene => { const sceneCard = document.createElement('button'); sceneCard.className = 'text-slate-900 dark:text-white p-6 glass-card rounded-2xl shadow-lg text-left hover:border-slate-300 dark:hover:border-white/20 transition-all interactive-press'; sceneCard.onclick = () => activateScene(scene.name); sceneCard.innerHTML = `<div class="text-4xl mb-4">${scene.icon}</div><h3 class="text-xl font-bold">${scene.name}</h3><p class="opacity-70">${scene.description}</p>`; scenesGrid.appendChild(sceneCard); }); 
+            devicesContainer.appendChild(scenesGrid); 
+        };
+
+        window.toggleZone = (zoneId) => {
+            performHapticFeedback();
+            const zone = customZones.find(z => z.id === zoneId);
+            if(!zone) return;
+            const isOn = zone.devices.some(id => { const d = devices.find(x => x.id === id); return d && (d.state === 'ON' || d.state === 'OPEN'); });
+            const targetState = isOn ? 'OFF' : 'ON';
+            zone.devices.forEach(id => { const dev = devices.find(d => d.id === id); if (dev) { setDeviceState(id, dev.type === 'sensor' ? (isOn?'CLOSED':'OPEN') : targetState, 'Zone Control'); } });
+        };
+
+        const renderZonesView = () => {
+            roomControlsContainer.innerHTML = `<div class="flex items-center justify-between"><h2 class="text-3xl font-bold text-slate-900 dark:text-white drop-shadow-md">Zones</h2></div>`;
+            devicesContainer.innerHTML = '';
+            const zonesGrid = document.createElement('div');
+            zonesGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6';
+            customZones.forEach(zone => {
+                const isActive = zone.devices.some(id => { const d = devices.find(x => x.id === id); return d && (d.state === 'ON' || d.state === 'OPEN'); });
+                const zoneCard = document.createElement('button');
+                zoneCard.className = `text-slate-900 dark:text-white p-6 zone-card glass-card rounded-2xl shadow-lg text-left transition-all interactive-press flex flex-col justify-between min-h-[140px]`;
+                zoneCard.onclick = () => window.toggleZone(zone.id);
+                const iconColor = isActive ? 'text-accent-500' : 'text-slate-800 dark:text-white/70';
+                const stateColor = isActive ? 'text-green-500' : 'opacity-50';
+                zoneCard.innerHTML = `<div class="flex justify-between items-start"><div class="p-3 bg-black/5 dark:bg-white/10 rounded-xl ${iconColor}"><i data-lucide="${zone.icon}"></i></div><span class="text-sm font-bold ${stateColor}">${isActive ? 'ACTIVE' : 'INACTIVE'}</span></div><div><h3 class="text-xl font-bold mt-4">${zone.name}</h3><p class="opacity-70 text-sm mt-1">${zone.devices.length} Devices grouped</p></div>`;
+                zonesGrid.appendChild(zoneCard);
+            });
+            devicesContainer.appendChild(zonesGrid);
+        };
+
+        // --- FULL SCREEN HUB FOR SYSTEM & SECURITY ---
+        window.toggleSystemHub = () => { 
+            performHapticFeedback(); 
+            if (!systemHubView) { systemHubView = document.createElement('div'); systemHubView.id = 'system-hub-view'; systemHubView.className = 'app-view hidden overflow-y-auto'; document.getElementById('main-app-view').appendChild(systemHubView); }
+            if (activeView === 'system') { 
+                showDashboardView(); 
+                if (window.topologyAnimFrame) cancelAnimationFrame(window.topologyAnimFrame);
+            } else { 
+                activeView = 'system'; 
+                mainDashboardView.classList.add('hidden'); 
+                energyCenterView.classList.add('hidden'); 
+                systemHubView.classList.remove('hidden'); 
+                const currentTheme = root.classList.contains('dark') ? 'dark' : 'light'; 
+                updateBackgroundColors(roomThemes[currentTheme]['System'] || roomThemes[currentTheme]['Default']); 
+                renderSystemHub(); 
+            } 
+        };
+
+        // --- NEW: HIERARCHICAL TOPOLOGY MAP RENDERER ---
+        const initTopologyMap = () => {
+            const canvas = document.getElementById('topology-canvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            const resize = () => {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            };
+            window.addEventListener('resize', resize);
+            resize();
+
+            // Map rooms to bright, distinctive colors
+            const roomColors = {
+                'Living Room': '#f43f5e', // Rose
+                'Bedroom': '#8b5cf6',     // Purple
+                'Kitchen': '#f59e0b',     // Amber
+                'Bathroom': '#0ea5e9'     // Sky Blue
+            };
+
+            const rooms = [...new Set(devices.map(d => d.room))];
+            
+            // Create the Sub-Hubs (Room Gateways)
+            const roomHubs = rooms.map((room, i) => ({
+                name: room,
+                color: roomColors[room] || '#64748b',
+                angle: (i / rooms.length) * Math.PI * 2,
+                distance: 90 + (Math.random() * 20 - 10), // Orbit distance from center broker
+                speed: 0.0005 + (i % 2 === 0 ? 0.0002 : -0.0002)
+            }));
+
+            // Create End Devices orbiting their Room Hubs
+            const nodes = devices.map((d, i) => {
+                return {
+                    id: d.id,
+                    room: d.room,
+                    angle: Math.random() * Math.PI * 2,
+                    distance: 35 + Math.random() * 20, // Orbit distance from room hub
+                    speed: 0.002 + Math.random() * 0.002 * (Math.random() > 0.5 ? 1 : -1),
+                };
+            });
+
+            const draw = () => {
+                if(!document.getElementById('topology-canvas')) {
+                    cancelAnimationFrame(window.topologyAnimFrame);
+                    window.removeEventListener('resize', resize);
+                    return;
+                }
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                const isDark = document.documentElement.classList.contains('dark');
+                const time = Date.now();
+
+                // 1. Draw Room Hubs & Main Branches
+                roomHubs.forEach(rh => {
+                    rh.angle += rh.speed;
+                    const rx = cx + Math.cos(rh.angle) * rh.distance;
+                    const ry = cy + Math.sin(rh.angle) * rh.distance;
+                    rh.x = rx; // Store position for devices to reference
+                    rh.y = ry;
+
+                    // Check if any device in this room is ON
+                    const roomDevices = devices.filter(d => d.room === rh.name);
+                    const isAnyOn = roomDevices.some(d => d.state === 'ON' || d.state === 'OPEN');
+
+                    // Draw main branch line (Center -> Room Hub)
+                    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(rx, ry);
+                    ctx.strokeStyle = isAnyOn ? rh.color : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)');
+                    ctx.lineWidth = isAnyOn ? 2 : 1;
+                    ctx.stroke();
+
+                    // Animate packet from Main to Room
+                    if (isAnyOn) {
+                        const packetProgress = (time % 1500) / 1500;
+                        ctx.beginPath();
+                        ctx.arc(cx + (rx - cx) * packetProgress, cy + (ry - cy) * packetProgress, 3, 0, Math.PI*2);
+                        ctx.fillStyle = rh.color; ctx.fill();
+                        ctx.shadowBlur = 10; ctx.shadowColor = rh.color;
+                    }
+
+                    // Draw Room Hub Node
+                    ctx.beginPath(); ctx.arc(rx, ry, 8, 0, Math.PI*2);
+                    ctx.fillStyle = isDark ? '#1e293b' : '#f1f5f9';
+                    ctx.fill();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = rh.color;
+                    ctx.stroke();
+                });
+
+                // 2. Draw End Devices & Sub-branches
+                nodes.forEach(n => {
+                    n.angle += n.speed;
+                    const rh = roomHubs.find(r => r.name === n.room);
+                    if(!rh) return;
+
+                    const nx = rh.x + Math.cos(n.angle) * n.distance;
+                    const ny = rh.y + Math.sin(n.angle) * n.distance;
+                    
+                    const realDevice = devices.find(d => d.id === n.id);
+                    const isOn = realDevice && (realDevice.state === 'ON' || realDevice.state === 'OPEN');
+                    
+                    // Draw sub-branch line (Room Hub -> Device)
+                    ctx.beginPath(); ctx.moveTo(rh.x, rh.y); ctx.lineTo(nx, ny);
+                    ctx.strokeStyle = isOn ? rh.color : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)');
+                    ctx.lineWidth = isOn ? 1.5 : 1;
+                    ctx.stroke();
+
+                    // Animated Data Packet (Room Hub -> Device)
+                    if (isOn) {
+                        // Offset timing slightly so it looks continuous
+                        const packetProgress = ((time + n.distance * 10) % 1000) / 1000;
+                        ctx.beginPath();
+                        ctx.arc(rh.x + (nx - rh.x) * packetProgress, rh.y + (ny - rh.y) * packetProgress, 2, 0, Math.PI*2);
+                        ctx.fillStyle = rh.color; ctx.fill();
+                    }
+
+                    // Draw Device Node
+                    ctx.beginPath(); ctx.arc(nx, ny, 4, 0, Math.PI*2);
+                    ctx.fillStyle = isOn ? rh.color : (isDark ? '#334155' : '#cbd5e1');
+                    ctx.shadowBlur = isOn ? 8 : 0; ctx.shadowColor = rh.color;
+                    ctx.fill(); ctx.shadowBlur = 0;
+                });
+
+                // 3. Draw Center MQTT Broker Hub over everything
+                ctx.beginPath(); ctx.arc(cx, cy, 24, 0, Math.PI*2);
+                ctx.fillStyle = isDark ? '#0f172a' : '#ffffff';
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = isDark ? '#4f46e5' : '#6366f1';
+                ctx.stroke();
+                ctx.shadowColor = '#4f46e5'; ctx.shadowBlur = 15; 
+                
+                ctx.fillStyle = isDark ? '#fff' : '#0f172a'; 
+                ctx.font = 'bold 10px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('MQTT', cx, cy);
+                ctx.shadowBlur = 0;
+
+                window.topologyAnimFrame = requestAnimationFrame(draw);
+            };
+            draw();
+        };
+
+        window.renderSystemHub = () => {
+            const sortedDevices = [...devices].sort((a, b) => (b.actuations || 0) - (a.actuations || 0));
+            systemHubView.innerHTML = `
+                <header class="app-header w-full max-w-7xl mx-auto mb-4 flex justify-between items-center gap-4 flex-shrink-0 text-slate-900 dark:text-white">
+                    <button onclick="window.showDashboardView()" class="cursor-pointer interactive-press p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors z-50 text-slate-800 dark:text-white">
+                        <i data-lucide="arrow-left" class="pointer-events-none"></i>
+                    </button>
+                    <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-center">System & Security</h1>
+                    <button onclick="window.exportLogs()" class="cursor-pointer bg-accent-600 hover:bg-accent-700 interactive-press px-4 py-2 text-sm font-semibold flex items-center gap-2 text-white rounded-full transition-colors z-50">
+                        <i data-lucide="download" class="w-4 h-4 pointer-events-none"></i><span class="hidden sm:inline pointer-events-none">Export Logs</span>
+                    </button>
+                </header>
+                <div id="system-hub-content" class="app-content w-full max-w-7xl mx-auto space-y-6 pb-20 text-slate-900 dark:text-white">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="security-card rounded-3xl p-6 flex flex-col items-center text-center glass-card"><div class="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mb-4"><i data-lucide="shield-check" class="w-8 h-8"></i></div><h3 class="text-lg font-bold">System Integrity</h3><p class="text-sm opacity-70">All devices are verified and encrypted.</p><span class="mt-3 px-3 py-1 bg-green-500/20 text-green-500 text-xs font-bold rounded-full">SECURE</span></div>
+                        <div class="glass-card rounded-3xl p-6"><h3 class="text-sm font-bold opacity-60 uppercase mb-4">Recent Access</h3><div class="space-y-3"><div class="flex items-center justify-between text-xs"><span class="font-medium">Anurag's Device</span><span class="opacity-60">Just now</span></div><div class="flex items-center justify-between text-xs"><span class="font-medium">Web Dashboard</span><span class="opacity-60">2h ago</span></div></div></div>
+                        <div class="glass-card border border-red-500/30 rounded-3xl p-6 pulse-red"><div class="flex justify-between items-start mb-2"><h3 class="text-sm font-bold text-red-500 uppercase">Active Alerts</h3><i data-lucide="alert-triangle" class="w-4 h-4 text-red-500"></i></div><p class="text-xs font-medium">Monitoring active. No current threats.</p></div>
+                    </div>
+
+                    <div class="glass-card rounded-3xl p-6 w-full">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold flex items-center gap-2"><i data-lucide="network"></i> Network Mesh Topology</h3>
+                            <span class="text-xs font-mono opacity-60 bg-black/5 dark:bg-white/10 px-2 py-1 rounded-md">MQTT Protocol</span>
+                        </div>
+                        <div class="relative w-full h-80 rounded-xl overflow-hidden bg-slate-900/5 dark:bg-black/40 border border-slate-200/50 dark:border-white/10 shadow-inner">
+                            <canvas id="topology-canvas" class="absolute inset-0 w-full h-full"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <div class="glass-card p-6 rounded-3xl">
+                           <h3 class="font-bold mb-4 opacity-70 uppercase text-xs">NodeMCU Telemetry</h3>
+                           <div class="flex justify-between items-center mb-3 pb-3 border-b border-black/5 dark:border-white/5">
+                               <span class="opacity-80">Wi-Fi Status</span>
+                               <span class="text-green-600 dark:text-green-400 font-bold">CONNECTED</span>
+                           </div>
+                           <div class="flex justify-between items-center mb-3 pb-3 border-b border-black/5 dark:border-white/5">
+                               <span class="opacity-80">Latency (Ping)</span>
+                               <span id="telemetry-ping" class="font-mono font-medium">${systemTelemetry.latency}ms</span>
+                           </div>
+                           <div class="flex justify-between items-center">
+                               <span class="opacity-80">Microcontroller Uptime</span>
+                               <span class="font-mono font-medium">14d 6h 22m</span>
+                           </div>
+                       </div>
+                       <div class="${systemTelemetry.failsafeEngaged ? 'bg-red-500/20 border-red-500' : 'glass-card'} border p-6 rounded-3xl flex flex-col items-center justify-center text-center transition-colors">
+                           <button onclick="window.toggleFailsafe()" class="${systemTelemetry.failsafeEngaged ? 'bg-red-600 animate-pulse ring-4 ring-red-500/50' : 'bg-red-500 hover:bg-red-600'} text-white w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-all mb-4 interactive-press cursor-pointer z-50">
+                               <i data-lucide="power-off" class="w-8 h-8 pointer-events-none"></i>
+                           </button>
+                           <h3 class="font-bold text-red-600 dark:text-red-400 text-lg">Master Failsafe</h3>
+                           <p class="text-xs opacity-70 mt-1 max-w-xs">Immediately cut power to all 4-channel relays via NodeMCU.</p>
+                       </div>
+                    </div>
+                    <div class="glass-card rounded-3xl p-6">
+                       <h3 class="font-bold mb-4">Relay Lifecycle Tracking <span class="text-xs font-normal opacity-60 ml-2">(Estimated lifespan: 50,000 actuations)</span></h3>
+                       <div class="space-y-4 max-h-64 overflow-y-auto pr-2">
+                          ${sortedDevices.map(d => { const percent = Math.min(100, ((d.actuations || 0) / 50000) * 100); const color = percent > 80 ? 'bg-red-500' : percent > 50 ? 'bg-amber-500' : 'bg-green-500'; return `<div><div class="flex justify-between text-sm mb-1"><span>${d.name} <span class="opacity-50 text-xs">(${d.room})</span></span><span class="font-mono text-xs font-bold">${d.actuations || 0}</span></div><div class="w-full bg-slate-200 dark:bg-black/40 rounded-full h-2"><div class="${color} h-2 rounded-full transition-all" style="width: ${percent}%"></div></div></div>` }).join('')}
+                       </div>
+                    </div>
+                </div>`;
+            lucide.createIcons();
+            setTimeout(initTopologyMap, 50); 
+        };
+
+        const renderActivityLog = () => { devicesContainer.innerHTML = ''; roomControlsContainer.innerHTML = `<div class="flex items-center justify-between"><h2 class="text-3xl font-bold text-slate-900 dark:text-white drop-shadow-md">Full Activity Log</h2></div>`; const logContainer = document.createElement('div'); logContainer.className = 'space-y-4 p-6 glass-card rounded-2xl shadow-lg max-h-[60vh] overflow-y-auto'; logContainer.innerHTML = activityLog.map(log => `<div class="flex items-center gap-4 text-slate-900 dark:text-white"><span class="font-mono text-sm opacity-50">${log.time}</span><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ${log.level === 'security' ? 'bg-red-500 text-white' : 'bg-blue-500/20 text-blue-700 dark:text-blue-300'}">${log.level}</span><p class="opacity-90">${log.event} <span class="opacity-50 text-xs">(${log.user})</span></p></div>`).join(''); devicesContainer.appendChild(logContainer); };
+
+        // --- NEW: ADMIN DASHBOARD RENDERER ---
+        window.renderAdminDashboard = () => {
+            
+            // Build the logs HTML outside the template literal to prevent parser errors
+            const logHtml = activityLog.length > 0 
+                ? activityLog.map(log => {
+                    const colorClass = log.level === 'security' || log.level === 'critical' ? 'text-red-400' : (log.level === 'warn' ? 'text-amber-400' : 'text-green-400');
+                    return `<div><span class="opacity-50">[${log.timestamp}]</span> <span class="${colorClass}">[${log.level.toUpperCase()}]</span> <span class="text-white">${log.event}</span> <span class="opacity-40 ml-2">User: ${log.user}</span></div>`;
+                }).join('') 
+                : '<div class="opacity-50">No logs generated yet.</div>';
+
+            adminDashboardView.innerHTML = `
+                <header class="app-header w-full max-w-7xl mx-auto mb-4 flex justify-between items-center gap-4 flex-shrink-0 text-slate-900 dark:text-white">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-accent-500/20 rounded-xl text-accent-600"><i data-lucide="server" class="w-6 h-6"></i></div>
+                        <div><h1 class="text-2xl font-bold tracking-tight">Admin Portal</h1><p class="text-xs opacity-70">System Analytics & Logs</p></div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="window.toggleTheme()" class="interactive-press p-2 rounded-full text-slate-700 dark:text-white hover:bg-black/10 dark:hover:bg-white/10"><i data-lucide="moon"></i></button>
+                        <button onclick="window.handleLogout()" class="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 interactive-press px-4 py-2 text-sm font-bold flex items-center gap-2 rounded-full transition-colors"><i data-lucide="log-out" class="w-4 h-4"></i><span class="hidden sm:inline">Terminate Session</span></button>
+                    </div>
+                </header>
+
+                <div class="app-content w-full max-w-7xl mx-auto space-y-6 pb-20 text-slate-900 dark:text-white">
+                    
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="glass-card rounded-2xl p-5 border-l-4 border-l-accent-500 !border-t-0 !border-r-0 !border-b-0"><p class="text-xs font-bold opacity-60 uppercase tracking-wider mb-1">Active Nodes</p><h3 class="text-3xl font-black">${devices.length}</h3></div>
+                        <div class="glass-card rounded-2xl p-5 border-l-4 border-l-green-500 !border-t-0 !border-r-0 !border-b-0"><p class="text-xs font-bold opacity-60 uppercase tracking-wider mb-1">System Uptime</p><h3 class="text-3xl font-black">99.9%</h3></div>
+                        <div class="glass-card rounded-2xl p-5 border-l-4 border-l-blue-500 !border-t-0 !border-r-0 !border-b-0"><p class="text-xs font-bold opacity-60 uppercase tracking-wider mb-1">API Requests/m</p><h3 class="text-3xl font-black font-mono">1,240</h3></div>
+                        <div class="glass-card rounded-2xl p-5 border-l-4 border-l-red-500 !border-t-0 !border-r-0 !border-b-0 pulse-red"><p class="text-xs font-bold text-red-500 uppercase tracking-wider mb-1">Security Flags</p><h3 class="text-3xl font-black text-red-500">0</h3></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <div class="lg:col-span-2 glass-card rounded-3xl p-6">
+                            <h3 class="font-bold mb-4 flex items-center gap-2"><i data-lucide="cpu" class="w-5 h-5 text-accent-500"></i> Server Resource Usage</h3>
+                            <div class="relative h-64 w-full">
+                                <canvas id="adminResourceChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="glass-card rounded-3xl p-6">
+                            <h3 class="font-bold mb-4 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5 text-accent-500"></i> Active Auth Sessions</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-3 p-3 bg-green-500/10 rounded-xl border border-green-500/20">
+                                    <div class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500"><i data-lucide="shield" class="w-4 h-4"></i></div>
+                                    <div><p class="text-sm font-bold leading-tight">Admin (You)</p><p class="text-xs opacity-60">192.168.1.10 • Just now</p></div>
+                                </div>
+                                <div class="flex items-center gap-3 p-3 bg-black/5 dark:bg-white/5 rounded-xl">
+                                    <div class="w-8 h-8 rounded-full bg-slate-500/20 flex items-center justify-center"><i data-lucide="smartphone" class="w-4 h-4"></i></div>
+                                    <div><p class="text-sm font-bold leading-tight">Anurag's iPhone</p><p class="text-xs opacity-60">192.168.1.44 • 2h ago</p></div>
+                                </div>
+                                <div class="flex items-center gap-3 p-3 bg-black/5 dark:bg-white/5 rounded-xl">
+                                    <div class="w-8 h-8 rounded-full bg-slate-500/20 flex items-center justify-center"><i data-lucide="monitor" class="w-4 h-4"></i></div>
+                                    <div><p class="text-sm font-bold leading-tight">Living Room iPad</p><p class="text-xs opacity-60">192.168.1.15 • 12h ago</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-3xl p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold flex items-center gap-2"><i data-lucide="terminal" class="w-5 h-5 text-accent-500"></i> Raw System Logs</h3>
+                            <button onclick="window.exportLogs()" class="text-xs font-bold bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg interactive-press hover:bg-black/10 dark:hover:bg-white/20 transition-colors">Export CSV</button>
+                        </div>
+                        <div class="bg-slate-900 rounded-xl p-4 h-64 overflow-y-auto font-mono text-xs text-slate-300 space-y-2 shadow-inner border border-slate-800">
+                            ${logHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+
+            // Render Chart
+            const ctx = document.getElementById('adminResourceChart').getContext('2d');
+            if (adminChart) adminChart.destroy();
+            
+            const isDark = root.classList.contains('dark'); 
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'; 
+            const textColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+
+            adminChart = new Chart(ctx, { 
+                type: 'line', 
+                data: { 
+                    labels: ['15s ago', '12s ago', '9s ago', '6s ago', '3s ago', 'Now'], 
+                    datasets: [
+                        { label: 'CPU Usage (%)', data: [12, 19, 15, 25, 22, 18], borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', borderWidth: 2, fill: true, tension: 0.4 },
+                        { label: 'RAM Usage (%)', data: [45, 46, 45, 48, 49, 47], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, fill: true, tension: 0.4 }
+                    ] 
+                }, 
+                options: { animation: { duration: 0 }, responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: {color: textColor} } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } } }
+            });
+        };
+        
+        const createScheduleCard = (schedule) => { 
+            let details = '';
+            let icon = '';
+            let title = 'Automation';
+
+            // Infer type for backend schedules that might not include it explicitly
+            let type = schedule.type;
+            if (!type) {
+                if (typeof schedule.duration === 'number') type = 'timer';
+                else if (schedule.time) type = 'time';
+            }
+
+            if (type === 'condition') { 
+                icon = 'zap'; 
+                title = 'Conditional Rule (IFTTT)'; 
+                const trigDev = devices.find(d => d.id === schedule.condition.deviceId); 
+                const actStr = schedule.action.type === 'scene' 
+                    ? `Activate Scene: ${schedule.action.targetId}` 
+                    : `Turn ${schedule.action.state} ${devices.find(d => d.id === schedule.action.targetId)?.name}`;
+                details = `<p class="opacity-80 font-medium">IF ${trigDev?.name} == ${schedule.condition.state}</p><p class="opacity-60 text-sm mt-1">THEN ${actStr}</p>`; 
+            } else if (type === 'time') { 
+                // Time Schedule: show the target time
+                icon = 'clock'; 
+                const device = devices.find(d => d.id === schedule.deviceId); 
+                title = device ? device.name : 'Schedule'; 
+                const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; 
+                const daySpans = days
+                    .map((day, i) => `<span class="${schedule.days?.includes(i) ? 'text-accent-600 font-bold' : 'opacity-50'}">${day}</span>`)
+                    .join(' ');
+                details = `<p class="opacity-70">Turn ${schedule.action} at ${formatTime12Hour(schedule.time)}</p><div class="flex gap-2 mt-2 text-xs">${daySpans}</div>`; 
+            } else if (type === 'timer') { 
+                // Timer: display the duration in minutes
+                icon = 'timer'; 
+                const device = devices.find(d => d.id === schedule.deviceId); 
+                title = device ? device.name : 'Timer'; 
+                const durationMins = (typeof schedule.duration === 'number') ? schedule.duration : (schedule.durationMinutes ?? null);
+                if (durationMins !== null) {
+                    details = `<p class="opacity-70">Turn OFF ${durationMins} mins after ON</p>`;
+                } else {
+                    details = `<p class="opacity-70">Timer automation configured</p>`;
+                }
+            } else {
+                // Fallback for any unexpected shape
+                icon = 'clock';
+                const device = devices.find(d => d.id === schedule.deviceId);
+                title = device ? device.name : 'Schedule';
+                const whenText = schedule.time ? ` at ${formatTime12Hour(schedule.time)}` : '';
+                const actionText = schedule.action ? `Turn ${schedule.action}` : 'Scheduled automation';
+                details = `<p class="opacity-70">${actionText}${whenText}</p>`;
+            }
+
+            const scheduleId = schedule._id || schedule.id;
+
+            return `<div class="text-slate-900 dark:text-white glass-card rounded-2xl p-6 shadow-lg flex items-center justify-between" data-schedule-id="${scheduleId}"><div class="flex-grow flex items-start gap-4"><div class="p-3 bg-accent-500/20 rounded-xl text-accent-500"><i data-lucide="${icon}"></i></div><div><p class="text-xl font-bold">${title}</p>${details}</div></div><button onclick="window.deleteSchedule('${scheduleId}')" class="interactive-press text-red-500 font-bold px-4 cursor-pointer z-10">Delete</button></div>`; 
+        };
+        const renderSchedules = () => { devicesContainer.innerHTML = ''; roomControlsContainer.innerHTML = `<div class="flex items-center justify-between"><h2 class="text-3xl font-bold text-slate-900 dark:text-white drop-shadow-md">Automations</h2><button onclick="window.showScheduleModal()" class="bg-accent-600 hover:bg-accent-700 interactive-press px-4 py-2 text-sm font-semibold flex items-center gap-2 text-white rounded-full transition-colors cursor-pointer"><i data-lucide="plus" class="w-4 h-4 pointer-events-none"></i><span class="pointer-events-none">Add Automation</span></button></div>`; if (automations.length === 0) { devicesContainer.innerHTML = `<div class="text-center mt-16 glass-card rounded-xl p-8 text-slate-800 dark:text-white"><div class="inline-block p-4 bg-black/5 dark:bg-white/10 rounded-full"><i data-lucide="split" class="w-16 h-16 opacity-50 mx-auto mb-4 text-slate-600 dark:text-white/70"></i></div><h3 class="text-xl font-semibold mt-4">No Automations Active</h3><p class="opacity-60 mt-2">Create time schedules or smart logic rules.</p></div>`; } else { devicesContainer.innerHTML = `<div class="space-y-4">${automations.map(createScheduleCard).join('')}</div>`; } };
+        
+        /* ==========================================================================
+           SCENE ACTIVATION ENGINE
+           ========================================================================== */
+        const activateScene = (sceneName) => {
+            performHapticFeedback();
+            const scene = scenes.find(s => s.name === sceneName);
+            if (!scene) return;
+
+            AuditLog.log(`Scene activated: "${sceneName}"`, 'info', { source: 'System' });
+            currentScene = sceneName; 
+
+            // 1. Update Background Colors
+            const currentThemeMode = root.classList.contains('dark') ? 'dark' : 'light';
+            const themeForScene = sceneThemes[currentThemeMode][sceneName];
+            
+            if (themeForScene) {
+                updateBackgroundColors(themeForScene);
+            }
+
+            // 2. Trigger Visual Particles
+            removeSceneAnimations(); 
+            if (sceneName === 'Movie Time') createStars(60);
+            else if (sceneName === 'Good Morning') createSunMotes(40);
+            else if (sceneName === 'Relax & Unwind') createRelaxOrbs(10);
+            else if (sceneName === 'Work Focus') createWorkLines(25);
+            else if (sceneName === 'Cooking Time') createBubbles(50);
+            else if (sceneName === 'Party Mode') createPartyLights(30);
+            else if (sceneName === 'Good Night') createZzzDrops(20);
+            else if (sceneName === 'Workout Mode') createEnergySparks(45);
+
+            // 3. Force UI Reflow
+            if (activeView === 'dashboard') {
+                dashboardContainer.style.opacity = '0';
+                setTimeout(() => { 
+                    dashboardContainer.style.opacity = '1'; 
+                    renderUI(); 
+                }, 50);
+            }
+
+            // 4. Execute Hardware Actions
+            scene.actions.forEach(action => {
+                const device = devices.find(d => d.id === action.deviceId);
+                if (device) {
+                    // Apply the specific mode (like 'party') if the scene dictates it
+                    if (action.mode) device.mode = action.mode; 
+                    
+                    if (device.state !== action.state) {
+                        setDeviceState(device.id, action.state, 'Scene Engine');
+                    }
+                }
+            });
+        };
+
+        /* ==========================================================================
+           PARTICLE GENERATORS (Z-Index Fixed)
+           ========================================================================== */
+        const createStars = (count) => {
+            removeSceneAnimations();
+            const container = document.body;
+            for (let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                star.className = 'star scene-animation';
+                const size = Math.random() * 2 + 1;
+                star.style.cssText = `
+                    width: ${size}px; 
+                    height: ${size}px; 
+                    top: ${Math.random() * 100}%; 
+                    left: ${Math.random() * 100}%; 
+                    animation-delay: ${Math.random() * 4}s; 
+                    animation-duration: ${Math.random() * 3 + 2}s;
+                    z-index: -5;
+                `;
+                container.appendChild(star);
+            }
+        };
+
+        const createSunMotes = (count) => {
+            removeSceneAnimations();
+            const container = document.body;
+            const colors = ['#fde68a', '#fca5a5', '#fcd34d'];
+            for (let i = 0; i < count; i++) {
+                const mote = document.createElement('div');
+                mote.className = 'sun-mote scene-animation';
+                const size = Math.random() * 15 + 5;
+                mote.style.cssText = `
+                    width: ${size}px; 
+                    height: ${size}px; 
+                    top: ${Math.random() * 40 + 80}vh; 
+                    left: ${Math.random() * 100}vw; 
+                    background-color: ${colors[Math.floor(Math.random() * colors.length)]};
+                    animation-delay: ${Math.random() * 10}s; 
+                    animation-duration: ${Math.random() * 10 + 10}s;
+                    z-index: -5;
+                `;
+                container.appendChild(mote);
+            }
+        };
+
+        const createRelaxOrbs = (count) => {
+            removeSceneAnimations();
+            const container = document.body;
+            const colors = ['#e9d5ff', '#dbeafe', '#c4b5fd'];
+            for (let i = 0; i < count; i++) {
+                const orb = document.createElement('div');
+                orb.className = 'relax-orb scene-animation';
+                const size = Math.random() * 200 + 150;
+                orb.style.cssText = `
+                    width: ${size}px; 
+                    height: ${size}px; 
+                    top: ${Math.random() * 100 - 25}vh; 
+                    left: ${Math.random() * 100 - 25}vw; 
+                    background-color: ${colors[Math.floor(Math.random() * colors.length)]};
+                    animation-delay: ${Math.random() * 8}s; 
+                    animation-duration: ${Math.random() * 6 + 8}s;
+                    z-index: -5;
+                `;
+                container.appendChild(orb);
+            }
+        };
+
+        const createWorkLines = (count) => {
+            removeSceneAnimations();
+            const container = document.body;
+            const colors = ['#c7d2fe', '#bfdbfe', '#a5b4fc'];
+            for (let i = 0; i < count; i++) {
+                const line = document.createElement('div');
+                line.className = 'work-line scene-animation';
+                const width = Math.random() * 1 + 1;
+                line.style.cssText = `
+                    width: ${width}px; 
+                    height: ${Math.random() * 100 + 50}px; 
+                    top: ${Math.random() * -40}vh; 
+                    left: ${Math.random() * 100}vw; 
+                    background-color: ${colors[Math.floor(Math.random() * colors.length)]};
+                    animation-delay: ${Math.random() * 15}s; 
+                    animation-duration: ${Math.random() * 10 + 10}s;
+                    z-index: -5;
+                `;
+                container.appendChild(line);
+            }
+        };
+
+        const createBubbles = (count) => {
+            removeSceneAnimations();
+            const container = document.body;
+            const colors = ['#fcd34d', '#fb923c', 'rgba(255,255,255,0.5)'];
+            for (let i = 0; i < count; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble scene-animation';
+                const size = Math.random() * 10 + 3;
+                bubble.style.cssText = `
+                    width: ${size}px; 
+                    height: ${size}px; 
+                    top: ${Math.random() * 20 + 90}vh; 
+                    left: ${Math.random() * 100}vw; 
+                    border-color: ${colors[Math.floor(Math.random() * colors.length)]};
+                    animation-delay: ${Math.random() * 5}s; 
+                    animation-duration: ${Math.random() * 3 + 2}s;
+                    opacity: 0.7;
+                    z-index: -5;
+                `;
+                container.appendChild(bubble);
+            }
+        };
+
+        const createPartyLights = (count) => {
+            const container = document.body;
+            const colors = ['#ef4444', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'];
+            for (let i = 0; i < count; i++) {
+                const light = document.createElement('div');
+                light.className = 'scene-animation';
+                const size = Math.random() * 150 + 50;
+                light.style.cssText = `
+                    position: fixed;
+                    width: ${size}px; 
+                    height: ${size}px; 
+                    border-radius: 50%;
+                    top: ${Math.random() * 100}%; 
+                    left: ${Math.random() * 100}%; 
+                    background-color: ${colors[Math.floor(Math.random() * colors.length)]};
+                    opacity: 0;
+                    filter: blur(40px);
+                    animation: twinkle ${Math.random() * 0.5 + 0.3}s infinite alternate;
+                    z-index: -5;
+                `;
+                container.appendChild(light);
+            }
+        };
+
+        const createZzzDrops = (count) => {
+            const container = document.body;
+            for (let i = 0; i < count; i++) {
+                const zzz = document.createElement('div');
+                zzz.className = 'scene-animation text-indigo-200/20 font-bold font-mono';
+                zzz.textContent = 'Z';
+                const size = Math.random() * 1.5 + 0.5;
+                zzz.style.cssText = `
+                    position: fixed;
+                    font-size: ${size}rem;
+                    top: ${Math.random() * 100}%; 
+                    left: ${Math.random() * 100}%; 
+                    animation: float-up-fade ${Math.random() * 6 + 4}s linear infinite;
+                    animation-delay: ${Math.random() * 5}s;
+                    z-index: -5;
+                `;
+                container.appendChild(zzz);
+            }
+        };
+
+        const createEnergySparks = (count) => {
+            const container = document.body;
+            for (let i = 0; i < count; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'scene-animation bg-orange-500';
+                spark.style.cssText = `
+                    position: fixed;
+                    width: ${Math.random() * 3 + 1}px; 
+                    height: ${Math.random() * 40 + 10}px; 
+                    top: 100vh; 
+                    left: ${Math.random() * 100}vw; 
+                    border-radius: 999px;
+                    box-shadow: 0 0 10px #f97316;
+                    animation: float-up-fade ${Math.random() * 1.5 + 0.5}s ease-in infinite;
+                    animation-delay: ${Math.random() * 2}s;
+                    z-index: -5;
+                `;
+                container.appendChild(spark);
+            }
+        };
+
+        const removeSceneAnimations = () => { 
+            document.querySelectorAll('.scene-animation').forEach(el => el.remove()); 
+        };
+
+        let tracers = []; let ctx;
+        const setupCanvas = () => { if (!animationCanvas) return; animationCanvas.width = window.innerWidth; animationCanvas.height = window.innerHeight; ctx = animationCanvas.getContext('2d'); };
+        const triggerTracerAnimation = (deviceId) => { const targetEl = document.querySelector(`[data-device-id="${deviceId}"] .toggle-btn`); const sourceEl = document.getElementById('main-power-source'); if (!targetEl || !sourceEl) return; const targetRect = targetEl.getBoundingClientRect(); const sourceRect = sourceEl.getBoundingClientRect(); tracers.push({ startX: sourceRect.left + sourceRect.width / 2, startY: sourceRect.top + sourceRect.height / 2, endX: targetRect.left + targetRect.width / 2, endY: targetRect.top + targetRect.height / 2, progress: 0, }); };
+        const hexToRgb = (hex) => { const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null; }
+        const animate = () => { if (!ctx) { requestAnimationFrame(animate); return; } ctx.clearRect(0, 0, animationCanvas.width, animationCanvas.height); const accentColorHex = getComputedStyle(root).getPropertyValue('--accent-500').trim(); const tracerColor = hexToRgb(accentColorHex) || '99, 102, 241'; tracers.forEach((tracer, index) => { tracer.progress += 0.04; const currentX = tracer.startX + (tracer.endX - tracer.startX) * tracer.progress; const currentY = tracer.startY + (tracer.endY - tracer.startY) * tracer.progress; ctx.beginPath(); ctx.moveTo(tracer.startX, tracer.startY); ctx.lineTo(currentX, currentY); ctx.strokeStyle = `rgba(${tracerColor}, ${1 - tracer.progress})`; ctx.lineWidth = 4; ctx.shadowBlur = 20; ctx.shadowColor = `rgba(${tracerColor}, ${1 - (tracer.progress / 1.5)})`; ctx.stroke(); if (tracer.progress >= 1) { tracers.splice(index, 1); } }); requestAnimationFrame(animate); };
+        const updateAllSliderFills = () => { document.querySelectorAll('.control-slider').forEach(slider => { const value = parseFloat(slider.value); const min = parseFloat(slider.min); const max = parseFloat(slider.max); const percent = max > min ? (value - min) / (max - min) * 100 : 0; slider.style.setProperty('--fill-percent', `${percent}%`); }); };
+        
+        const showDashboardView = () => { 
+            performHapticFeedback(); activeView = 'dashboard'; 
+            if(energyCenterView) energyCenterView.classList.add('hidden'); 
+            if(systemHubView) systemHubView.classList.add('hidden'); 
+            if(adminDashboardView) adminDashboardView.classList.add('hidden'); 
+            if(mainDashboardView) mainDashboardView.classList.remove('hidden'); 
+            if (energyChart) { energyChart.destroy(); energyChart = null; } 
+            const currentTheme = root.classList.contains('dark') ? 'dark' : 'light'; 
+            const roomName = (['Favorites', 'Automations', 'Activity Log', 'Scenes', 'Zones'].includes(activeRoom)) ? 'Default' : activeRoom; 
+            updateBackgroundColors(roomThemes[currentTheme][roomName] || roomThemes[currentTheme]['Default']); 
+            renderUI(); 
+        };
+        
+        const showEnergyCenter = () => { performHapticFeedback(); activeView = 'energy'; mainDashboardView.classList.add('hidden'); if(systemHubView) systemHubView.classList.add('hidden'); energyCenterView.classList.remove('hidden'); const currentTheme = root.classList.contains('dark') ? 'dark' : 'light'; updateBackgroundColors(roomThemes[currentTheme]['Default']); renderEnergyCenter(); };
+        const toggleEnergyCenter = () => { if (activeView === 'energy') { showDashboardView(); } else { showEnergyCenter(); } };
+        
+        window.updateKwhRate = (val) => {
+            const newRate = parseFloat(val);
+            if(!isNaN(newRate) && newRate > 0) { kwhRate = newRate; localStorage.setItem('kwhRate', newRate); if(activeView==='energy') renderEnergyCenter(); }
+        };
+
+        const calculateProjectedCost = (overrideHours = null) => { let totalMonthlyKwh = 0; devices.forEach(device => { const power = Number(device.power) || 0; const dailyUse = overrideHours !== null ? overrideHours : (Number(device.dailyUse) || 0); const dailyKwh = (power * dailyUse) / 1000; totalMonthlyKwh += dailyKwh * 30; }); if (isNaN(totalMonthlyKwh)) return '0.00'; return (totalMonthlyKwh * kwhRate).toFixed(2); };
+        const generateInsights = () => { const insights = []; if (devices.length === 0) return ["No data to generate insights."]; const deviceConsumption = devices.map(d => ({ name: d.name, room: d.room, dailyKwh: ((d.power||0) * (d.dailyUse||0)) / 1000 })).sort((a, b) => b.dailyKwh - a.dailyKwh); const highestConsumer = deviceConsumption[0]; if(highestConsumer && highestConsumer.dailyKwh > 0) insights.push(`Your <strong>${highestConsumer.name}</strong> in the ${highestConsumer.room} is the highest energy consumer.`); insights.push("Switching to LED lighting reduces daily energy consumption significantly."); return insights; };
+        
+        const getAnomalies = () => {
+            const anomalies = []; const now = Date.now();
+            devices.forEach(d => {
+                if ((d.state === 'ON' || d.state === 'OPEN') && !d.excludeFromGlobalToggle && d.turnedOnAt) {
+                    const hoursOn = (now - d.turnedOnAt) / (1000 * 60 * 60);
+                    if (hoursOn > 6) { 
+                        anomalies.push(`${d.name} in ${d.room} has been ON for ${hoursOn.toFixed(1)} hours.`);
+                    }
+                }
+            });
+            return anomalies;
+        };
+
+        const logCurrentPower = () => { const currentPower = devices.filter(d => d.state === 'ON').reduce((sum, d) => sum + (d.power||0), 0); energyLog.push({ time: Date.now(), power: currentPower }); if (energyLog.length > 60) energyLog.shift(); if(activeView === 'energy') { updateLivePowerDisplay(); updateEnergyChartData(); } };
+        const updateLivePowerDisplay = () => { const livePowerValueEl = document.getElementById('live-power-value'); const livePowerBreakdownEl = document.getElementById('live-power-breakdown'); if (!livePowerValueEl || !livePowerBreakdownEl) return; const currentPower = devices.filter(d => d.state === 'ON').reduce((sum, d) => sum + (d.power||0), 0); const roomsPower = devices.filter(d => d.state === 'ON').reduce((acc, d) => { if(!acc[d.room]) acc[d.room] = 0; acc[d.room] += (d.power||0); return acc; }, {}); const sortedRooms = Object.entries(roomsPower).sort((a,b) => b[1] - a[1]); livePowerValueEl.textContent = currentPower; const breakdownHTML = sortedRooms.map(([room, power]) => `<div class="flex justify-between items-center text-sm"><span class="opacity-80">${room}</span><span class="font-bold">${power} W</span></div><div class="w-full bg-slate-200/50 dark:bg-white/10 rounded-full h-2.5"><div class="bg-accent-500 h-2.5 rounded-full transition-all duration-300" style="width: ${currentPower > 0 ? Math.min(100, (power/currentPower)*100) : 0}%"></div></div>`).join(''); livePowerBreakdownEl.innerHTML = sortedRooms.length === 0 ? '<p class="text-center opacity-70 mt-4">All devices are off.</p>' : breakdownHTML; };
+        const updateEnergyChartData = () => { if (!energyChart) return; const dataPoints = energyLog.map(log => log.power); const labels = energyLog.map(log => new Date(log.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })); energyChart.data.labels = labels; energyChart.data.datasets[0].data = dataPoints; energyChart.update('none'); };
+
+        const renderEnergyCenter = () => {
+            const currentPower = devices.filter(d => d.state === 'ON').reduce((sum, d) => sum + (d.power||0), 0);
+            const roomsPower = devices.filter(d => d.state === 'ON').reduce((acc, d) => { if(!acc[d.room]) acc[d.room] = 0; acc[d.room] += (d.power||0); return acc; }, {});
+            const sortedRooms = Object.entries(roomsPower).sort((a,b) => b[1] - a[1]);
+            const baselineCost = calculateProjectedCost(); const insights = generateInsights();
+            const anomalies = getAnomalies();
+
+            let anomaliesHTML = anomalies.length > 0 
+                ? anomalies.map(a => `<div class="flex items-center gap-3 text-red-600 dark:text-red-400 mb-2"><i data-lucide="alert-triangle" class="w-5 h-5"></i><span class="text-sm font-bold">${a}</span></div>`).join('') 
+                : `<p class="text-sm opacity-70">No anomalies detected. Energy usage is optimal.</p>`;
+
+            // --- GENERATE 7-DAY FORECAST DATA ---
+            const baseDailyKwh = devices.reduce((sum, d) => sum + ((d.power||0) * (d.dailyUse||0) / 1000), 0);
+            let forecastData = []; let forecastLabels = [];
+            let tempDate = new Date();
+            for(let i=0; i<7; i++) {
+                tempDate.setDate(tempDate.getDate() + 1);
+                forecastLabels.push(tempDate.toLocaleDateString('en-US', {weekday: 'short'}));
+                // Add minor organic variance to make the model look realistic (+/- 15%)
+                forecastData.push((baseDailyKwh * (1 + (Math.random() * 0.3 - 0.15))).toFixed(2)); 
+            }
+
+            energyCenterView.innerHTML = `
+                <header class="app-header w-full max-w-7xl mx-auto mb-4 flex justify-between items-center gap-4 flex-shrink-0 text-slate-900 dark:text-white">
+                    <button onclick="window.showDashboardView()" class="cursor-pointer interactive-press p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors z-50 text-slate-800 dark:text-white">
+                        <i data-lucide="arrow-left" class="pointer-events-none"></i>
+                    </button>
+                    <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-center">Energy Analytics</h1>
+                    <button onclick="window.exportEnergyData()" class="cursor-pointer bg-accent-600 hover:bg-accent-700 interactive-press px-4 py-2 text-sm font-semibold flex items-center gap-2 text-white rounded-full transition-colors z-50">
+                        <i data-lucide="download" class="w-4 h-4 pointer-events-none"></i><span class="hidden sm:inline pointer-events-none">Export Data</span>
+                    </button>
+                </header>
+                <div id="energy-center-content" class="app-content w-full max-w-7xl mx-auto space-y-8 pb-20 text-slate-900 dark:text-white">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="glass-card rounded-2xl p-6">
+                            <h2 class="text-xl font-bold mb-4">Live Consumption</h2>
+                            <div class="text-center mb-4"><span id="live-power-value" class="text-5xl font-bold text-accent-500">${currentPower}</span><span class="text-2xl opacity-70">Watts</span></div>
+                            <div id="live-power-breakdown" class="space-y-2">${sortedRooms.map(([room, power]) => `<div class="flex justify-between items-center text-sm"><span class="opacity-80">${room}</span><span class="font-bold">${power} W</span></div><div class="w-full bg-slate-200/50 dark:bg-white/10 rounded-full h-2.5"><div class="bg-accent-500 h-2.5 rounded-full transition-all duration-300" style="width: ${currentPower > 0 ? Math.min(100, (power/currentPower)*100) : 0}%"></div></div>`).join('')}${sortedRooms.length === 0 ? '<p class="text-center opacity-70 mt-4">All devices are off.</p>' : ''}</div>
+                        </div>
+                        <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+                            <div>
+                                <h2 class="text-xl font-bold mb-2">Monthly Estimator</h2><p class="text-sm opacity-60 mb-4">Based on typical daily usage.</p>
+                                <div class="text-center mb-6"><span class="text-sm opacity-80">Baseline Projection</span><br><span class="text-5xl font-bold text-green-600 dark:text-green-400">₹${baselineCost}</span></div>
+                            </div>
+                            <div>
+                                <h3 class="text-md font-semibold mb-2 text-center">"What If?" Scenarios</h3>
+                                <div class="grid grid-cols-3 gap-2 text-center mb-4">
+                                    <div><button onclick="window.updateScenarioCost(2)" class="interactive-press w-full bg-slate-200 dark:bg-white/10 p-2 rounded-lg font-bold cursor-pointer">Low (2h)</button></div>
+                                    <div><button onclick="window.updateScenarioCost(6)" class="interactive-press w-full bg-slate-200 dark:bg-white/10 p-2 rounded-lg font-bold cursor-pointer">Med (6h)</button></div>
+                                    <div><button onclick="window.updateScenarioCost(8)" class="interactive-press w-full bg-slate-200 dark:bg-white/10 p-2 rounded-lg font-bold cursor-pointer">High (8h)</button></div>
+                                </div>
+                                <div id="scenario-result" class="text-center h-8 flex items-center justify-center mb-2"></div>
+                                <div class="mt-4 text-sm opacity-80 flex items-center justify-center gap-2 border-t border-black/10 dark:border-white/10 pt-4">
+                                    Electricity Rate: ₹<input type="number" id="kwh-rate-input" value="${kwhRate}" step="0.5" class="bg-transparent border-b border-slate-400 dark:border-slate-500 w-16 text-center outline-none" onchange="window.updateKwhRate(this.value)"> / kWh
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="${anomalies.length > 0 ? 'bg-red-500/10 border-red-500/30 pulse-red' : 'glass-card'} border rounded-2xl p-6 transition-colors">
+                        <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="activity" class="${anomalies.length > 0 ? 'text-red-500' : ''}"></i> System Warnings & Anomalies</h2>
+                        ${anomaliesHTML}
+                    </div>
+                    
+                    <div class="glass-card rounded-2xl p-6"><h2 class="text-xl font-bold mb-4">Usage History</h2><div class="relative h-64"><canvas id="energyHistoryChart"></canvas></div></div>
+                    
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="trending-up" class="text-accent-500"></i> Predictive Forecasting</h2>
+                                <p class="text-sm opacity-60">AI-driven 7-day model based on your historical load data.</p>
+                            </div>
+                        </div>
+                        <div class="relative h-64"><canvas id="energyForecastChart"></canvas></div>
+                    </div>
+                    
+                    <div class="glass-card rounded-2xl p-6"><h2 class="text-xl font-bold mb-4">Insights</h2><ul class="space-y-3 list-disc list-inside opacity-90">${insights.map(i => `<li>${i}</li>`).join('')}</ul></div>
+                </div>`;
+            lucide.createIcons();
+            
+            const isDark = root.classList.contains('dark'); const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'; const textColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+            
+            // Render History Chart
+            const historyCtx = document.getElementById('energyHistoryChart').getContext('2d');
+            const dataPoints = energyLog.map(log => log.power); const labels = energyLog.map(log => new Date(log.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+            if (energyChart) energyChart.destroy();
+            energyChart = new Chart(historyCtx, { 
+                type: 'line', 
+                data: { labels: labels, datasets: [{ label: 'Watts', data: dataPoints, backgroundColor: 'hsla(var(--accent-hsl), 0.2)', borderColor: 'hsla(var(--accent-hsl), 1)', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true }] }, 
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } } }
+            });
+
+            // Render Forecast Chart
+            const forecastCtx = document.getElementById('energyForecastChart').getContext('2d');
+            if (forecastChart) forecastChart.destroy();
+            forecastChart = new Chart(forecastCtx, {
+                type: 'line',
+                data: { 
+                    labels: forecastLabels, 
+                    datasets: [{ label: 'Projected kWh', data: forecastData, backgroundColor: 'hsla(var(--accent-hsl), 0.1)', borderColor: 'hsla(var(--accent-hsl), 0.8)', borderWidth: 3, borderDash: [5, 5], pointBackgroundColor: 'hsla(var(--accent-hsl), 1)', pointRadius: 4, tension: 0.3, fill: true }] 
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: 'kWh', color: textColor }, beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } } }
+            });
+        };
+        
+        window.updateScenarioCost = (hours) => { performHapticFeedback(); const newCost = calculateProjectedCost(hours); document.getElementById('scenario-result').innerHTML = `<span class="font-bold text-accent-600 dark:text-accent-400">If average use was ${hours}h/day, your bill would be ~₹${newCost}</span>`; };
+
+        // --- LOGIN ROUTING LOGIC, MPIN & SECURITY ---
+        let pendingLoginRole = null;
+        let failedMpinAttempts = 0;
+        let isMpinLocked = false;
+        let lockoutTimer = null;
+
+        window.handleLoginSuccess = (role) => { 
+            // Intercept the login to show the MPIN screen
+            pendingLoginRole = role;
+            renderMpinModal();
+        };
+
+        const renderMpinModal = () => {
+            const formContainer = document.getElementById('login-form-container');
+            
+            // Lockout UI states
+            const disabledState = isMpinLocked ? 'disabled' : '';
+            const opacityState = isMpinLocked ? 'opacity-50 cursor-not-allowed' : '';
+            const headerText = isMpinLocked 
+                ? '<span class="text-red-500 font-bold">SYSTEM LOCKED</span>' 
+                : `Enter your 4-digit MPIN to unlock Homie as ${pendingLoginRole === 'admin' ? 'Admin' : 'Resident'}.`;
+            
+            formContainer.innerHTML = `
+                <h2 class="text-3xl font-bold text-center mb-2">Security Check</h2>
+                <p class="text-gray-500 text-center mb-8">${headerText}</p>
+                
+                <div class="flex justify-center gap-4 mb-6">
+                    <input type="password" maxlength="1" inputmode="numeric" ${disabledState} class="mpin-input w-14 h-16 text-center text-3xl font-bold bg-white/50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-500 transition-all shadow-sm ${opacityState}">
+                    <input type="password" maxlength="1" inputmode="numeric" ${disabledState} class="mpin-input w-14 h-16 text-center text-3xl font-bold bg-white/50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-500 transition-all shadow-sm ${opacityState}">
+                    <input type="password" maxlength="1" inputmode="numeric" ${disabledState} class="mpin-input w-14 h-16 text-center text-3xl font-bold bg-white/50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-500 transition-all shadow-sm ${opacityState}">
+                    <input type="password" maxlength="1" inputmode="numeric" ${disabledState} class="mpin-input w-14 h-16 text-center text-3xl font-bold bg-white/50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-500 transition-all shadow-sm ${opacityState}">
+                </div>
+                
+                <p id="mpin-error" class="${isMpinLocked ? 'text-red-600' : 'text-red-500 hidden'} font-semibold text-center text-sm mb-4 animate-pulse">
+                    ${isMpinLocked ? 'Too many failed attempts. Try again in 30s.' : 'Incorrect MPIN. Please try again.'}
+                </p>
+                
+                <div class="mt-auto pt-6 flex flex-col gap-3">
+                    <button onclick="window.verifyMpin()" ${disabledState} class="w-full bg-accent-600 hover:bg-accent-700 interactive-press text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-lg ${opacityState}">
+                        Unlock
+                    </button>
+                    <button onclick="window.switchLoginTab(currentLoginTab)" class="w-full bg-transparent text-gray-500 hover:text-gray-800 dark:hover:text-white font-semibold py-3 px-4 rounded-xl transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            `;
+            
+            // If locked out, don't bother attaching the auto-advance listeners
+            if (isMpinLocked) return; 
+
+            // Setup auto-advance functionality
+            const inputs = document.querySelectorAll('.mpin-input');
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', () => {
+                    if (input.value.length === 1 && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                });
+                
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && input.value.length === 0 && index > 0) {
+                        inputs[index - 1].focus();
+                    } else if (e.key === 'Enter') {
+                        window.verifyMpin();
+                    }
+                });
+            });
+            
+            setTimeout(() => inputs[0].focus(), 100);
+        };
+
+        window.verifyMpin = () => {
+            if (isMpinLocked) return;
+            performHapticFeedback();
+            
+            const inputs = document.querySelectorAll('.mpin-input');
+            const enteredPin = Array.from(inputs).map(i => i.value).join('');
+            
+            // Role-based validation
+            const isValidResident = (pendingLoginRole === 'user' && enteredPin === '6969');
+            const isValidAdmin = (pendingLoginRole === 'admin' && enteredPin === '9999');
+            
+            if (isValidResident || isValidAdmin) {
+                // Pin is correct, reset attempts and finalize the login
+                failedMpinAttempts = 0;
+                window.finalizeLogin(pendingLoginRole);
+            } else {
+                // Pin is incorrect, increment attempts
+                failedMpinAttempts++;
+                
+                if (failedMpinAttempts >= 3) {
+                    // Trigger 30-second lockout
+                    isMpinLocked = true;
+                    
+                    // Log the security breach to the Admin Dashboard
+                    AuditLog.log(`Brute-force MPIN attempt blocked for ${pendingLoginRole} portal`, 'security', { source: 'Auth Gateway' });
+                    
+                    renderMpinModal(); 
+                    
+                    // Reset lockout after 30 seconds
+                    clearTimeout(lockoutTimer);
+                    lockoutTimer = setTimeout(() => {
+                        isMpinLocked = false;
+                        failedMpinAttempts = 0; 
+                        // Only re-render if the modal is still open
+                        if (!document.getElementById('login-modal-backdrop').classList.contains('hidden')) {
+                            renderMpinModal(); 
+                        }
+                    }, 30000);
+                    
+                } else {
+                    // Standard wrong pin flash
+                    const errorMsg = document.getElementById('mpin-error');
+                    errorMsg.textContent = `Incorrect MPIN. ${3 - failedMpinAttempts} attempts remaining.`;
+                    errorMsg.classList.remove('hidden');
+                    
+                    inputs.forEach(i => { 
+                        i.value = ''; 
+                        i.classList.add('border-red-500', 'bg-red-500/10'); 
+                    });
+                    
+                    setTimeout(() => {
+                        inputs.forEach(i => i.classList.remove('border-red-500', 'bg-red-500/10'));
+                    }, 1000);
+                    
+                    inputs[0].focus();
+                }
+            }
+        };
+
+        window.finalizeLogin = (role) => { 
+            localStorage.setItem('isLoggedIn', 'true'); 
+            localStorage.setItem('userRole', role);
+            isLoggedIn = true; 
+            currentUserRole = role;
+
+            landingPageView.classList.add('hidden'); 
+            hideLoginModal(); 
+            AuditLog.log(`Successful ${role.toUpperCase()} Login`, 'security', { source: 'Web Application' }); 
+            
+            initializeApp(); 
+            
+            if (role === 'admin') {
+                activeView = 'admin'; 
+                mainAppView.classList.add('hidden');
+                adminDashboardView.classList.remove('hidden');
+                updateBackgroundColors({}); 
+                renderAdminDashboard();
+            } else {
+                activeView = 'dashboard';
+                adminDashboardView.classList.add('hidden');
+                mainAppView.classList.remove('hidden');
+            }
+        };
+
+        window.handleLogout = () => { 
+            localStorage.setItem('isLoggedIn', 'false'); 
+            localStorage.removeItem('userRole');
+            isLoggedIn = false; 
+            currentUserRole = 'user';
+            AuditLog.log('User Logout', 'security'); 
+            location.reload(); 
+        };
+
+        const initializeApp = () => {
+            quickStatsWidget = document.getElementById('quick-stats-widget'); themeToggleButton = document.getElementById('theme-toggle-btn'); clockElement = document.getElementById('clock'); roomTabsContainer = document.getElementById('room-tabs'); roomControlsContainer = document.getElementById('room-controls'); devicesContainer = document.getElementById('devices-container'); dashboardContainer = document.getElementById('dashboard-container'); animationCanvas = document.getElementById('animation-canvas'); settingsModalBackdrop = document.getElementById('settings-modal-backdrop'); voiceModalBackdrop = document.getElementById('voice-modal-backdrop'); voiceModalContent = document.getElementById('voice-modal-content'); loginModalBackdrop = document.getElementById('login-modal-backdrop'); loginModalContent = document.getElementById('login-modal-content'); scheduleModalBackdrop = document.getElementById('schedule-modal-backdrop'); scheduleModalContent = document.getElementById('schedule-modal-content'); mainDashboardView = document.getElementById('main-dashboard-view'); energyCenterView = document.getElementById('energy-center-view'); systemHubView = document.getElementById('system-hub-view'); adminDashboardView = document.getElementById('admin-dashboard-view');
+
+            loadState();
+            fetchSchedules();
+            
+            const currentTheme = root.classList.contains('dark') ? 'dark' : 'light';
+            const roomName = (['Favorites', 'Automations', 'Activity Log', 'Scenes', 'Zones'].includes(activeRoom)) ? 'Default' : activeRoom;
+            updateBackgroundColors(roomThemes[currentTheme][roomName] || roomThemes[currentTheme]['Default']);
+
+            themeToggleButton.addEventListener('click', toggleTheme);
+            document.getElementById('settings-btn').addEventListener('click', () => { performHapticFeedback(); showSettingsModal(); });
+            document.getElementById('main-power-btn').addEventListener('click', handleMainPowerToggle);
+            
+            settingsModalBackdrop.addEventListener('click', (e) => { if(e.target === e.currentTarget) hideSettingsModal() });
+            loginModalBackdrop.addEventListener('click', (e) => { if(e.target === e.currentTarget) hideLoginModal() });
+            voiceModalBackdrop.addEventListener('click', (e) => { if(e.target === e.currentTarget) hideVoiceModal() });
+            scheduleModalBackdrop.addEventListener('click', (e) => { if(e.target === e.currentTarget) hideScheduleModal() });
+            scheduleModalContent.addEventListener('click', (e) => { if (e.target.classList.contains('day-picker')) e.target.classList.toggle('day-picker-selected'); });
+
+            dashboardContainer.addEventListener('click', (event) => { const target = event.target; if (target.closest('.toggle-btn')) { performHapticFeedback(); const deviceId = target.closest('.toggle-btn').dataset.id; const device = devices.find(d => d.id === deviceId); const newState = device.state === 'ON' || device.state === 'OPEN' ? (device.type === 'sensor' ? 'CLOSED' : 'OFF') : (device.type === 'sensor' ? 'OPEN' : 'ON'); setDeviceState(deviceId, newState, 'Manual'); } else if (target.matches('.led-mode-btn')) { performHapticFeedback(); const deviceId = target.dataset.id; const mode = target.dataset.mode; const device = devices.find(d => d.id === deviceId); if (device && device.type === 'led-strip') { resetSceneTheme(); device.mode = mode; AuditLog.log(`${device.room} ${device.name} mode set to ${mode}`, 'info'); saveState(); renderUI(); } } });
+            
+            dashboardContainer.addEventListener('input', (event) => { const target = event.target; if (target.matches('.control-slider')) { updateAllSliderFills(); const value = target.value; if (target.matches('.lamp-slider')) { const device = devices.find(d => d.id === target.dataset.id); if (device) { device.brightness = parseInt(value, 10); const label = document.getElementById(`brightness-label-${device.id}`); if (label) label.textContent = `${device.brightness}%`; } } else if (target.matches('.fan-slider')) { const device = devices.find(d => d.id === target.dataset.id); if (device) { device.speed = parseInt(value, 10); const label = document.getElementById(`fan-speed-label-${device.id}`); if (label) label.textContent = device.speed; } } } });
+
+            dashboardContainer.addEventListener('change', (event) => { const target = event.target; if (!target.matches('.control-slider')) return; const deviceId = target.dataset.id; const device = devices.find(d => d.id === deviceId); if (!device) return; resetSceneTheme(); const value = target.value; if (target.matches('.lamp-slider')) { const numericBrightness = parseInt(value, 10); AuditLog.log(`${device.room} ${device.name} brightness set to ${numericBrightness}%`, 'info'); if (numericBrightness === 0 && device.state === 'ON') { setDeviceState(deviceId, 'OFF'); } else if (numericBrightness > 0 && device.state === 'OFF') { setDeviceState(deviceId, 'ON'); } else { saveState(); } } else if (target.matches('.fan-slider')) { AuditLog.log(`${device.room} ${device.name} speed set to ${parseInt(value, 10)}`, 'info'); saveState(); } });
+
+            pingInterval = setInterval(() => { 
+                systemTelemetry.latency = Math.floor(Math.random() * 8) + 12; 
+                const pingEl = document.getElementById('telemetry-ping'); 
+                if (pingEl) pingEl.textContent = `${systemTelemetry.latency}ms`; 
+                
+                // Live animate the Admin chart if we are viewing it
+                if (currentUserRole === 'admin' && adminChart && activeView === 'admin') {
+                    const newCpu = 15 + Math.random() * 10;
+                    const newRam = 45 + Math.random() * 5;
+                    adminChart.data.datasets[0].data.shift();
+                    adminChart.data.datasets[0].data.push(newCpu);
+                    adminChart.data.datasets[1].data.shift();
+                    adminChart.data.datasets[1].data.push(newRam);
+                    adminChart.update('none');
+                }
+            }, 3000);
+
+            calculateEnergy(); updateClock(); 
+            if(statsInterval) clearInterval(statsInterval); statsInterval = setInterval(cycleStats, 4000); 
+            setInterval(updateClock, 10000);
+
+            // --- HEARTBEAT & DIAGNOSTICS SIMULATION ---
+            setInterval(() => {
+                // Randomly drop a device offline for testing (about 2% chance every 8 seconds)
+                if (Math.random() > 0.98 && devices.length > 0) {
+                    const randomDevice = devices[Math.floor(Math.random() * devices.length)];
+                    
+                    if (!randomDevice.isOffline) {
+                        randomDevice.isOffline = true;
+                        AuditLog.log(`Connection dropped for ${randomDevice.name} (${randomDevice.room})`, 'warn', { source: 'Diagnostics' });
+                        
+                        // Force UI refresh immediately to show the offline badge
+                        if (activeView === 'dashboard') renderUI();
+                        else if (activeView === 'system') renderSystemHub();
+                        
+                        // Automatically recover the node after 10-20 seconds
+                        setTimeout(() => {
+                            randomDevice.isOffline = false;
+                            AuditLog.log(`Connection restored to ${randomDevice.name}`, 'info', { source: 'Diagnostics' });
+                            if (activeView === 'dashboard') renderUI();
+                            else if (activeView === 'system') renderSystemHub();
+                        }, Math.random() * 10000 + 10000);
+                    }
+                }
+            }, 8000);
+
+            setInterval(checkTimeAutomations, 60000);
+            setInterval(logCurrentPower, 5000);
+            setInterval(saveState, 60000);
+            
+            setupCanvas(); window.addEventListener('resize', setupCanvas); animate(); 
+            renderUI(); updateThemeIcon();
+        };
+
+        const init = () => {
+            const currentTheme = root.classList.contains('dark') ? 'dark' : 'light';
+            updateBackgroundColors(roomThemes[currentTheme]['Default']);
+            loginModalBackdrop = document.getElementById('login-modal-backdrop'); 
+            loginModalContent = document.getElementById('login-modal-content');
+            adminDashboardView = document.getElementById('admin-dashboard-view');
+            
+            if (localStorage.getItem('isLoggedIn') === 'true') { 
+                isLoggedIn = true; 
+                currentUserRole = localStorage.getItem('userRole') || 'user';
+                landingPageView.classList.add('hidden');
+                
+                // ALWAYS init app engine to run clocks, charts, and arrays
+                initializeApp(); 
+                
+                if (currentUserRole === 'admin') {
+                    activeView = 'admin';
+                    mainAppView.classList.add('hidden');
+                    adminDashboardView.classList.remove('hidden');
+                    updateBackgroundColors({}); 
+                    renderAdminDashboard();
+                } else {
+                    activeView = 'dashboard';
+                    adminDashboardView.classList.add('hidden');
+                    mainAppView.classList.remove('hidden'); 
+                }
+            } 
+            else { 
+                isLoggedIn = false; 
+                mainAppView.classList.add('hidden'); 
+                adminDashboardView.classList.add('hidden');
+                landingPageView.classList.remove('hidden'); 
+                document.getElementById('landing-login-btn').addEventListener('click', showLoginModal); 
+                document.getElementById('landing-get-started-btn').addEventListener('click', showLoginModal); 
+                lucide.createIcons(); 
+            }
+        };
+
+        window.hideLoginModal = hideLoginModal; 
+        window.toggleEnergyCenter = toggleEnergyCenter; 
+        window.showDashboardView = showDashboardView;
+        window.handleRoomToggle = (roomName) => { performHapticFeedback(); const roomDevices = devices.filter(d => d.room === roomName); const isAnyDeviceOn = roomDevices.some(d => d.state === 'ON' || d.state === 'OPEN'); const targetState = isAnyDeviceOn ? 'OFF' : 'ON'; roomDevices.forEach(device => setDeviceState(device.id, device.type === 'sensor' ? (isAnyDeviceOn?'CLOSED':'OPEN') : targetState, 'Manual')); };
+        window.hideVoiceModal = hideVoiceModal; 
+        window.activateScene = activateScene;
+        window.showScheduleModal = showScheduleModal;
+        window.hideScheduleModal = hideScheduleModal;
+        window.saveSchedule = saveSchedule;
+        window.deleteSchedule = deleteSchedule;
+        window.toggleFavorite = toggleFavorite;
+        window.setAccentColor = setAccentColor;
+        window.showSettingsModal = showSettingsModal;
+        window.hideSettingsModal = hideSettingsModal;
+        window.toggleTheme = toggleTheme;
+        
+        init();
+    });
+    </script>
+</body>
+</html>
