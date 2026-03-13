@@ -3,7 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const mpinMiddleware = require('../middleware/mpinMiddleware');
 const mqttClient = require('../mqttClient');
-const Device = require('../models/Device'); // Ensure this matches your model path
+const Device = require('../models/device'); // Ensure this matches your model path
 
 // @route   POST /api/hardware/master-failsafe
 // @desc    Trigger the master failsafe (Requires JWT AND MPIN)
